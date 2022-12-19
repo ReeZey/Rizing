@@ -3496,8 +3496,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afed4a72efe4480eb9c99b61ff2460df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 15
-  moveAcceleration: 5.5
+  moveSpeed: 5.5
   jumpPower: 75
   dampCoefficent: 0.05
   MaxAirSpeed: 10

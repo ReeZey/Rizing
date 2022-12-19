@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using Rizing.Abstract;
 using Rizing.Save;
 using UnityEditor;
