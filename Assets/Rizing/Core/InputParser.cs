@@ -22,8 +22,6 @@ namespace Rizing.Core
 
             rebindOperation.OnComplete(operation => {
                 action.Enable();
-                var aa = action.bindings[0];
-                Debug.Log(aa);
                 rebindOperation.Dispose();
             });
         }

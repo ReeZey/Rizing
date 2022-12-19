@@ -5,6 +5,7 @@ using System.Text;
 using Rizing.Abstract;
 using Rizing.Developer;
 using Rizing.Interface;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Console = Rizing.Developer.Console;
@@ -16,7 +17,7 @@ namespace Rizing.Core
 
         private InputParser _inputParser;
         [SerializeField] private InputField _inputBox;
-        [SerializeField] private Text _outputBox;
+        [SerializeField] private TextMeshProUGUI _outputBox;
         [SerializeField] private ScrollRect _scrollRect;
 
         private const string prefix = "[RizingConsole]";
@@ -24,7 +25,7 @@ namespace Rizing.Core
         private void ExecuteCommand() {
             if (_inputBox.text.Length == 0) return;
             
-            LogToConsole(_inputBox.text);
+            LogToConsole("> " + _inputBox.text);
             
             foreach (string commands in _inputBox.text.Split(';')) {
                 string[] split = commands.TrimStart().Split();

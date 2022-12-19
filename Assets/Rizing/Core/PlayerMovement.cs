@@ -4,10 +4,16 @@ using UnityEngine;
 
 namespace Rizing.Core {
     public class PlayerMovement : MonoBehaviour, IEntity {
-        [SerializeField] private float moveSpeed = 10;
-        [SerializeField] private float moveAcceleration = 10;
-        [SerializeField] private float jumpPower = 8;
-        [SerializeField] private float dampCoefficent = 0.2f;
+        [Header("Movement stuffs")]
+        [SerializeField] private float moveSpeed = 5.5f;
+        [SerializeField] private float jumpPower = 75;
+        [Space]
+        [SerializeField] private float dampCoefficent = 0.05f;
+        [Space]
+        [SerializeField] private float MaxAirSpeed = 10;
+        [SerializeField] private float AirStrafeForce = 2;
+        [Header("Misc")]
+        [SerializeField] private GameObject moveVisualization;
         
         private Transform _fpsCamera;
         private Rigidbody _rigidbody;
@@ -19,12 +25,7 @@ namespace Rizing.Core {
 
         private Vector3 _moveInput;
         private bool _jumpInput;
-
-        [SerializeField] private GameObject MoveVisualization;
         
-        [SerializeField] private float MaxAirSpeed;
-        [SerializeField] private float AirStrafeForce;
-
         private void Start() {
             _fpsCamera = FPSCamera.Instance.transform;
             _rigidbody = GetComponent<Rigidbody>();
@@ -59,25 +60,10 @@ namespace Rizing.Core {
                 _rigidbody.AddForce(transform.up * jumpPower, ForceMode.Impulse);
                 _readyJump = false;
             }
-
-            /*
-            if (_grounded && _readyJump) {
-                Vector3 flatVel = new Vector3(velocity.x, 0f, velocity.z);
-            
-                if(flatVel.magnitude > moveSpeed)
-                {
-                    //Vector3 limitedVel = flatVel.normalized * moveSpeed;
-                    //_rigidbody.velocity = new Vector3(limitedVel.x, velocity.y, limitedVel.z);
-
-                    
-                    //do something
-                }
-            }
-            */
         }
 
         public void FixedProcess(float deltaTime) {
-            MoveVisualization.transform.localPosition = _moveInput * 10;
+            moveVisualization.transform.localPosition = _moveInput * 10;
             
             if (_grounded) {
                 ProcessGroundedMovement();
@@ -93,7 +79,7 @@ namespace Rizing.Core {
             _direction = forward.normalized * _moveInput.y + _fpsCamera.right * _moveInput.x;
             _direction.y = 0;
             
-            _rigidbody.AddForce(_direction * moveAcceleration, ForceMode.Impulse);
+            _rigidbody.AddForce(_direction * moveSpeed, ForceMode.Impulse);
 
             var velocity = _rigidbody.velocity;
 
@@ -133,21 +119,5 @@ namespace Rizing.Core {
         public void LateProcess(float deltaTime) {
             
         }
-
-        /*
-        private void OnDrawGizmosSelected() {
-            if (!Application.isPlaying) return;
-            
-            Gizmos.color = Color.blue;
-            var cameraPos = _fpsCamera.position;
-            
-            Gizmos.DrawLine(cameraPos, cameraPos + _direction.normalized);
-            
-            Gizmos.color = Color.red;
-
-            var playerPos = transform.position;
-            Gizmos.DrawLine(playerPos, playerPos + Vector3.down);
-        }
-        */
     }
 }

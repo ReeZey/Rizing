@@ -63,7 +63,7 @@ namespace Rizing.Entity {
             if (_holding && _inputParser.GetKey("Fire1").WasPressedThisFrame()) {
                 DropItem();
                 
-                _pickupRigidbody.velocity = (_fpsCamera.transform.forward + _pickupRigidbody.velocity.normalized) * 10;
+                _pickupRigidbody.AddForce(_fpsCamera.transform.forward * 100, ForceMode.Impulse);
             }
         }
 
@@ -79,7 +79,7 @@ namespace Rizing.Entity {
                 Debug.Log("whoopsie i dropped the soap");
             }
             
-            _pickupRigidbody.velocity = wantedPos * (_holding ? 100 : 10);
+            _pickupRigidbody.velocity = wantedPos * 10;
         }
 
         private void OnDrawGizmosSelected() {
@@ -126,7 +126,6 @@ namespace Rizing.Entity {
             
             _pickupGUID = saveData.pickupGUID;
             
-            //_pickupItem = GameManager.Instance.GetSaveables().First(entity => entity.id == _pickupGUID).GetComponent<Rigidbody>();
             _pickupRigidbody = FindObjectsOfType<SaveableEntity>()
                 .FirstOrDefault(entity => entity.id == _pickupGUID)
                 ?.GetComponent<Rigidbody>();
