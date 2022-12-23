@@ -13,6 +13,8 @@ namespace Rizing.Entity {
     
         private InputParser _inputParser;
         private FPSCamera _fpsCamera;
+
+        private Rigidbody _playerRigidbody;
         
         private Transform _prevParent;
         private Transform _pickupTransform;
@@ -24,11 +26,11 @@ namespace Rizing.Entity {
         private bool _togglePickup;
         private float _objectDistance;
 
-        
-
         protected override void Start() {
             _inputParser = InputParser.Instance;
             _fpsCamera = FPSCamera.Instance;
+
+            _playerRigidbody = GetComponent<Rigidbody>();
 
             base.Start();
         }
@@ -48,13 +50,14 @@ namespace Rizing.Entity {
 
                 _pickupTransform = raycastHit.transform;
                 _prevParent = _pickupTransform.parent;
-                _pickupTransform.parent = _fpsCamera.transform;
+                var playerTransform = transform;
+                _pickupTransform.parent = playerTransform;
                 
                 raycastHit.rigidbody.useGravity = false;
                 _pickupRigidbody = raycastHit.rigidbody;
                 _pickupRigidbody.angularDrag = 2;
 
-                _objectDistance = (transform.position - _pickupTransform.position).magnitude;//raycastHit.distance;
+                _objectDistance = (playerTransform.position - _pickupTransform.position).magnitude;//raycastHit.distance;
                 _pickupGUID = _pickupTransform.TryGetComponent<SaveableEntity>(out var saveableEntity) ? saveableEntity.id : null;
                 
                 _holding = true;
@@ -66,7 +69,7 @@ namespace Rizing.Entity {
                 _pickupRigidbody.AddForce(_fpsCamera.transform.forward * 100, ForceMode.Impulse);
             }
         }
-
+        
         public override void FixedProcess(float deltaTime) {
             if (!_holding) return;
             
@@ -74,12 +77,13 @@ namespace Rizing.Entity {
             Vector3 pos = cameraTransform.forward * Mathf.Max(2, _objectDistance);
             Vector3 wantedPos = cameraTransform.position + pos - _pickupTransform.position;
         
-            if (wantedPos.magnitude > 1) {
+            if (wantedPos.magnitude > 2) {
                 DropItem();
                 Debug.Log("whoopsie i dropped the soap");
+                return;
             }
             
-            _pickupRigidbody.velocity = wantedPos * 10;
+            _pickupRigidbody.velocity = _playerRigidbody.velocity + wantedPos * 10;
         }
 
         private void OnDrawGizmosSelected() {
@@ -100,7 +104,7 @@ namespace Rizing.Entity {
             
             if (_pickupRigidbody == null) return;
 
-            _pickupRigidbody.velocity = GetComponent<Rigidbody>().velocity;
+            _pickupRigidbody.velocity = _playerRigidbody.velocity;
             
             _pickupRigidbody.useGravity = true;
             _pickupRigidbody.angularDrag = 0.05f;

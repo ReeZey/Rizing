@@ -114,6 +114,10 @@ namespace Rizing.Core
                     foreach (var entity in entities) {
                         entity.FixedProcess(time);
                     }
+                    
+                    foreach (var entity in entities) {
+                        entity.LateFixedProcess(time);
+                    }
 
                     break;
                 case GameState.Paused:
@@ -168,6 +172,8 @@ namespace Rizing.Core
         }
 
         public IEnumerable<SaveableEntity> GetSaveables() {
+            if (entities.Count == 0) return Enumerable.Empty<SaveableEntity>();
+            
             return entities.FindAll(entity => entity is SaveableEntity).Cast<SaveableEntity>();
         }
 

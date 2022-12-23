@@ -60,7 +60,7 @@ namespace Rizing.Core
             LogToConsole(new ConsoleOutput(str));
         }
 
-        private void LogToConsole(string str, LogPrefix logPrefix) {
+        public void LogToConsole(string str, LogPrefix logPrefix) {
             LogToConsole(new ConsoleOutput(str, logPrefix));
         }
         
@@ -93,7 +93,7 @@ namespace Rizing.Core
             
             StopCoroutine(ScrollDown());
             
-            if(Math.Abs(_scrollRect.verticalScrollbar.value) < 0.1f) StartCoroutine(ScrollDown());
+            if(gameObject.activeInHierarchy && Math.Abs(_scrollRect.verticalScrollbar.value) < 0.1f) StartCoroutine(ScrollDown());
         }
 
         private IEnumerator ScrollDown() {
@@ -119,6 +119,10 @@ namespace Rizing.Core
         }
 
         public void LateProcess(float deltaTime) {
+            
+        }
+
+        public void LateFixedProcess(float deltaTime) {
             
         }
     }

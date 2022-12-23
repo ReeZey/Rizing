@@ -12,5 +12,7 @@
         void FixedProcess(float deltaTime);
         
         void LateProcess(float deltaTime);
+        
+        void LateFixedProcess(float deltaTime);
     }
 }

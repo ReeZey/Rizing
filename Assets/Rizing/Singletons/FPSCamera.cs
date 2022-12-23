@@ -36,6 +36,10 @@ namespace Rizing.Singletons {
             cameraTransform.eulerAngles = eulerAngles;
         }
 
+        public void LateFixedProcess(float deltaTime) {
+            
+        }
+
         public void Play() {
             
         }

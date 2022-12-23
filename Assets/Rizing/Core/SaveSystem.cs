@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Rizing.Abstract;
+using Rizing.Developer;
 using Rizing.Save;
 using UnityEditor;
 using UnityEngine;
@@ -16,10 +17,12 @@ namespace Rizing.Core {
         
         private GameManager _gameManager;
         private InputParser _inputParser;
+        private DeveloperConsole _developerConsole;
         
         private void Start() {
             _gameManager = GameManager.Instance;
             _inputParser = InputParser.Instance;
+            _developerConsole = DeveloperConsole.Instance;
         }
 
         private void Update() {
@@ -75,7 +78,12 @@ namespace Rizing.Core {
         }
 
         public void Save(string str) {
-            Debug.Log($"Saving [{str}]");
+            if (!Application.isPlaying) {
+                Debug.LogWarning("Currently only playmode saving is allowed");
+                return;
+            }
+            
+            _developerConsole.LogToConsole($"Saving [{str}]");
 
             var state = LoadFile(str);
             SaveState(state);
@@ -84,7 +92,12 @@ namespace Rizing.Core {
 
 
         public void Load(string str) {
-            Debug.Log($"Loading [{str}]");
+            if (!Application.isPlaying) {
+                Debug.LogWarning("Currently only playmode saving is allowed");
+                return;
+            }
+            
+            _developerConsole.LogToConsole($"Loading [{str}]");
             
             var state = LoadFile(str);
             LoadState(state);
@@ -101,7 +114,10 @@ namespace Rizing.Core {
             //var deflate = new DeflateStream(stream, CompressionMode.Compress);
 
             var formatter = CustomBinaryFormatter.BinaryFormatter;
+            formatter.Serialize(stream, state);
+            stream.Close();
             
+            /*
             try {
                 formatter.Serialize(stream, state);
             }
@@ -113,53 +129,53 @@ namespace Rizing.Core {
                 File.Delete(pathToFile);
                 File.Move(pathToFile + ".bak", pathToFile);
             }
-
-            stream.Close();
+            */
         }
 
         private Dictionary<string, object> LoadFile(string str) {
             string fullPath = BuildPath(str);
+            
+            while (true) {
+                bool normalSaveExist = File.Exists(fullPath);
+                bool backupExist = File.Exists(fullPath + ".bak");
 
-            bool backupexists = File.Exists(fullPath + ".bak");
-            bool normalsaveexisst = File.Exists(fullPath);
+                if (!backupExist && !normalSaveExist) {
+                    return new Dictionary<string, object>();
+                }
 
-            if (backupexists && !normalsaveexisst) {
-                File.Copy(fullPath + ".bak", fullPath);
-            } else if (!backupexists && !normalsaveexisst) {
-                return new Dictionary<string, object>();
-            }
+                if (backupExist && !normalSaveExist) {
+                    File.Move(fullPath + ".bak", fullPath);
+                    continue;
+                }
 
-            var stream = File.Open(fullPath, FileMode.Open);
-            //var deflate = new DeflateStream(stream, CompressionMode.Decompress);
+                var stream = File.Open(fullPath, FileMode.Open);
+                //var deflate = new DeflateStream(stream, CompressionMode.Decompress);
 
-            var formatter = CustomBinaryFormatter.BinaryFormatter;
+                var formatter = CustomBinaryFormatter.BinaryFormatter;
 
-            var dict = new Dictionary<string, object>();
-
-            try {   
-                dict = (Dictionary<string, object>) formatter.Deserialize(stream);
-            }
-            catch (Exception e) {
-                Debug.LogError(e);
+                var failed = false;
+                Dictionary<string, object> dict = null;
+                try {
+                    dict = formatter.Deserialize(stream) as Dictionary<string, object>;
+                }
+                catch (Exception e) {
+                    _developerConsole.LogToConsole(e.ToString(), LogPrefix.Error);
+                    failed = true;
+                }
 
                 stream.Close();
 
+                if (!failed) return dict;
+                
                 File.Delete(fullPath);
-
-                if (!File.Exists(fullPath + ".bak")) return dict;
-
                 File.Move(fullPath + ".bak", fullPath);
-                LoadFile(str);
             }
-            stream.Close();
-
-            return dict;
         }
 
-        private void SaveState(IDictionary<string, object> stateList) {
+        private void SaveState(Dictionary<string, object> stateList) {
             foreach (var saveable in _gameManager.GetSaveables()) {
                 if (saveable.id == "unset") {
-                    Debug.LogWarning($"SAVE WARNING. saveable entity [{saveable.name}] is unset");
+                    _developerConsole.LogToConsole($"SAVE WARNING. saveable entity [{saveable.name}] is unset, developer issue", LogPrefix.Warning);
                     continue;
                 }
 
@@ -170,11 +186,11 @@ namespace Rizing.Core {
         private void LoadState(IDictionary<string, object> stateList) {
             foreach (var saveable in _gameManager.GetSaveables()) {
                 if (saveable.id == "unset") {
-                    Debug.LogWarning($"LOAD WARNING. saveable entity [{saveable.name}] is unset");
+                    _developerConsole.LogToConsole($"LOAD WARNING. saveable entity [{saveable.name}] is unset, developer issue", LogPrefix.Warning);
                     continue;
                 }
 
-                if (stateList.TryGetValue(saveable.id, out var state)) {
+                if (stateList.TryGetValue(saveable.id, out object state)) {
                     saveable.LoadState(state);
                 }
             }

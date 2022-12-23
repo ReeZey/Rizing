@@ -27,5 +27,9 @@ namespace Rizing.Abstract {
         public virtual void LateProcess(float deltaTime) {
             
         }
+
+        public virtual void LateFixedProcess(float deltaTime) {
+            
+        }
     }
 }

@@ -25,9 +25,7 @@ namespace Rizing.Abstract {
             {
                 Instance = this as T;
             }
-
             
-        
             if (Instance == this) {
                 if (!Persistent) return;
                 

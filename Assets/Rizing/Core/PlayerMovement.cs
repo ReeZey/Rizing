@@ -119,5 +119,9 @@ namespace Rizing.Core {
         public void LateProcess(float deltaTime) {
             
         }
+
+        public void LateFixedProcess(float deltaTime) {
+            
+        }
     }
 }
