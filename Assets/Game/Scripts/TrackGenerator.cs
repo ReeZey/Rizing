@@ -7,74 +7,107 @@ using UnityEngine;
 public class TrackGenerator : MonoBehaviour 
 {
 	[SerializeField] private int numberOfPoints = 20;
-
-	private List<Vector3> controlPoints = new List<Vector3>();
-	private List<Vector3> controlPoints2 = new List<Vector3>();
+	[SerializeField] private List<Vector3> points = new List<Vector3>();
+	
+	private List<Vector3> breakPoints = new List<Vector3>();
+	private List<Vector3> pathPoints = new List<Vector3>();
 
 	private void Update () 
 	{
-		controlPoints.Clear();
-		controlPoints2.Clear();
-		for (var index = 0; index < transform.childCount; index++)
-		{
-			Transform start = transform.GetChild(index);
-			var trackPointData = start.GetComponent<ITrackPoint>();
-
-			if (trackPointData == null) continue;
+		breakPoints.Clear();
+		pathPoints.Clear();
+		points.Clear();
+		
+		for (var index = 0; index < transform.childCount; index++) {
+			var trans = transform.GetChild(index);
+			if (trans.childCount == 0) {
+				points.Add(trans.position);
+				continue;
+			}
 			
-			controlPoints.Add(start.position);
+			for (var childIndex = 0; childIndex < trans.childCount; childIndex++) {
+				points.Add(trans.GetChild(childIndex).position);
+			}
 		}
 		
-		for(var j = 0; j < controlPoints.Count; j++)
+		for (var index = 0; index < points.Count; index++)
 		{
-			int p1index = j + 1 >= controlPoints.Count ? j + 1 - controlPoints.Count : j + 1;
-			int p2index = j + 2 >= controlPoints.Count ? j + 2 - controlPoints.Count : j + 2;
+			var position = points[index];
+			breakPoints.Add(position);
+
+			if (index == 0 || index == points.Count - 1) {
+				breakPoints.Add(position);
+			}
 			
-			Vector3 p0 = 0.5f * (controlPoints[j] + controlPoints[p1index]);
-			Vector3 p1 = controlPoints[p1index];
-			Vector3 p2 = 0.5f * (controlPoints[p1index] + controlPoints[p2index]);
+			if (index + 1 >= transform.childCount) {
+				continue;
+			}
+			breakPoints.Add(position + (points[index + 1] - position) * 0.5f);
+		}
+
+		for(var j = 0; j < breakPoints.Count; j++) {
+			int p0index = j;
+			int p1index = j + 1;
+			int p2index = j + 2;
+			
+			if (p1index == breakPoints.Count) {
+				p1index = j;
+			}
+			
+			if (p2index >= breakPoints.Count) {
+				p2index = j;
+			}
+			
+			Vector3 p0 = (breakPoints[p0index] + breakPoints[p1index]) * 0.5f;
+			Vector3 p1 =  breakPoints[p1index];
+			Vector3 p2 = (breakPoints[p1index] + breakPoints[p2index]) * 0.5f;
 			
 			float pointStep = 1.0f / numberOfPoints;
-			if (j == controlPoints.Count)
-			{
-				pointStep = 1.0f / (numberOfPoints - 1.0f);
-			}
 
 			for(var i = 0; i < numberOfPoints; i++) 
 			{
 				float t = i * pointStep;
 				Vector3 position = (1.0f - t) * (1.0f - t) * p0 + 2.0f * (1.0f - t) * t * p1 + t * t * p2;
-				controlPoints2.Add(position);
+				pathPoints.Add(position);
 			}
 		}
 	}
 
 	public void OnValidate() {
-		if(numberOfPoints < 2)
-		{
-			numberOfPoints = 2;
-		}
+		numberOfPoints = Math.Max(2, numberOfPoints);
 	}
 
 	private void OnDrawGizmos()
 	{
-		Gizmos.color = Color.red;
-		for (var index = 0; index < controlPoints2.Count; index++)
+		Gizmos.color = Color.green;
+		
+		for (var index = 0; index < breakPoints.Count; index++) {
+			//int finish = index + 1;
+			//if (finish == breakPoints.Count) finish = index;
+
+			Gizmos.DrawLine(breakPoints[index], breakPoints[index] + new Vector3(0, 2, 0));
+			//Gizmos.DrawLine(breakPoints[index], breakPoints[finish]);
+		}
+		
+		Gizmos.color = new Color(1f, 0.02f, 0f);
+		for (var index = 0; index < pathPoints.Count; index++)
 		{
 			int start = index;
 			int finish = index + 1;
-			if (finish == controlPoints2.Count)
-			{
-				finish = 0;
-			}
-			
-			Gizmos.DrawLine(controlPoints2[start], controlPoints2[start] + new Vector3(0, 2, 0));
-			Gizmos.DrawLine(controlPoints2[start], controlPoints2[finish]);
-		}
-	}
+			if (finish == pathPoints.Count) finish = index;
 
-	public List<Vector3> GetPath()
-	{
-		return controlPoints2;
+			//Gizmos.DrawLine(pathPoints[start], pathPoints[start] + new Vector3(2, 0, 0));
+			//Gizmos.DrawLine(pathPoints[start], pathPoints[finish]);
+
+			var direction = pathPoints[finish] - pathPoints[start];
+			
+			//Gizmos.color = Color.red;
+			//Gizmos.DrawLine(pathPoints[start], pathPoints[start] + direction.normalized);
+			
+			Vector3 right = Quaternion.AngleAxis(90f, Vector3.up) * direction;
+			
+			Gizmos.DrawLine(pathPoints[start], pathPoints[start] + right.normalized);
+			Gizmos.DrawLine(pathPoints[start], pathPoints[start] + -right.normalized);
+		}
 	}
 }
