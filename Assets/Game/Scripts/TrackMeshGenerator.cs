@@ -34,29 +34,24 @@ public class TrackMeshGenerator : MonoBehaviour {
         var tris = new List<int>();
         
         for (var i = 0; i < points.Count; i++) {
-            if (i >= points.Count - 2) continue;
+            if (i >= points.Count - 7) continue;
             
             var currentPos = transform.InverseTransformPoint(points[i].vec);
             var nextPos = transform.InverseTransformPoint(points[i + 1].vec);
             var nextNextPos = transform.InverseTransformPoint(points[i + 2].vec);
-            
-            var forward = (nextPos - currentPos).normalized;
-            var currentPosRight = Quaternion.AngleAxis(90, points[i].normal) * forward;
-            var currentposLeft = -currentPosRight;
-            
-            var forward2 = (nextPos - nextNextPos).normalized;
-            var nextPosRight = Quaternion.AngleAxis(90, points[i + 1].normal) * forward2;
-            var nextPosLeft = -nextPosRight;
-            
-            
-            verts.Add(currentPos + currentposLeft);
+
+            var currentPosRight = Quaternion.AngleAxis(90, nextPos - currentPos) * points[i].normal;
+            var nextPosRight = Quaternion.AngleAxis(90, nextNextPos - nextPos) * points[i + 1].normal;
+
+
+            verts.Add(currentPos - currentPosRight);
             verts.Add(currentPos + currentPosRight);
             verts.Add(nextPos + nextPosRight);
-            verts.Add(nextPos + nextPosLeft);
+            verts.Add(nextPos - nextPosRight);
             
             uvs.Add(new Vector2(0,0));
-            uvs.Add(new Vector2(0,1));
             uvs.Add(new Vector2(1,0));
+            uvs.Add(new Vector2(0,1));
             uvs.Add(new Vector2(1,1));
             
             //tris.Add(0);
@@ -67,16 +62,16 @@ public class TrackMeshGenerator : MonoBehaviour {
             tris.Add(1 + i * 4);
             tris.Add(0 + i * 4);
             
-            tris.Add(1 + i * 4);
-            tris.Add(2 + i * 4);
             tris.Add(3 + i * 4);
-            
-            tris.Add(1 + i * 4);
             tris.Add(2 + i * 4);
             tris.Add(0 + i * 4);
             
-            tris.Add(2 + i * 4);
+            tris.Add(0 + i * 4);
             tris.Add(1 + i * 4);
+            tris.Add(2 + i * 4);
+            
+            tris.Add(0 + i * 4);
+            tris.Add(2 + i * 4);
             tris.Add(3 + i * 4);
             
             //vertIndex += 2;

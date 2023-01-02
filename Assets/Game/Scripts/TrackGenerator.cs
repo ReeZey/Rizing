@@ -6,10 +6,9 @@ using UnityEngine;
 public class TrackGenerator : MonoBehaviour 
 {
 	[SerializeField] private int numberOfPoints = 20;
-	[SerializeField] private List<Vector3> locations = new List<Vector3>();
+	[SerializeField] private List<Transform> locations = new List<Transform>();
 	
 	private List<Vector3> ballPoints = new List<Vector3>();
-	private List<Vector3> oldBallPoints = new List<Vector3>();
 	private List<PathInfo> pathPoints = new List<PathInfo>();
 
 	public bool ShouldUpdate;
@@ -35,56 +34,38 @@ public class TrackGenerator : MonoBehaviour
 		for (var index = 0; index < transform.childCount; index++) {
 			var trans = transform.GetChild(index);
 			if (trans.childCount == 0) {
-				locations.Add(trans.position);
+				locations.Add(trans);
 				continue;
 			}
 			
 			for (var childIndex = 0; childIndex < trans.childCount; childIndex++) {
-				locations.Add(trans.GetChild(childIndex).position);
+				locations.Add(trans.GetChild(childIndex));
 			}
 		}
 		
 		for (var index = 0; index < locations.Count; index++)
 		{
-			var position = locations[index];
+			var trans = locations[index];
 			
-			ballPoints.Add(position);
+			ballPoints.Add(trans.position);
 
-			if (index == 0 || index == locations.Count - 1) {
-				ballPoints.Add(position);
-			}
-			
 			if (index  >= transform.childCount - 1) {
 				continue;
 			}
-			
-			ballPoints.Add(position + (locations[index + 1] - position) * 0.33f);
-			ballPoints.Add(position + (locations[index + 1] - position) * 0.66f);
+
+			var transPosition = trans.position;
+			ballPoints.Add(transPosition + (locations[index + 1].position - transPosition) * 0.33f);
+			ballPoints.Add(transPosition + (locations[index + 1].position - transPosition) * 0.66f);
 		}
 		
-		List<Vector3> bankNormals = new List<Vector3>();
-
-		for (var j = 0; j < ballPoints.Count; j += 3) {
-			int p0index = j;
-			int p3index = j + -3;
-			int p6index = j + 3;
-		
-			if (p3index < 0) p3index = 0;
-			if (p6index >= ballPoints.Count) p6index = ballPoints.Count - 1;
-
-			float sAngle = Vector3.SignedAngle(ballPoints[p3index] - ballPoints[p0index], ballPoints[p0index] - ballPoints[p6index], Vector3.up);
-			var normalRotation = Quaternion.AngleAxis(-sAngle * 0.5f, ballPoints[p6index] - ballPoints[p3index]);
-			
-			bankNormals.Add(normalRotation * Vector3.up);
-		}
-
+		Vector3 prevVec = Vector3.zero;
 		for(var j = 0; j < ballPoints.Count; j++) {
 			int p0index = j;
 			int p1index = j + 1;
 			int p2index = j + 2;
 			
 			if (p1index == ballPoints.Count) {
-				p1index = ballPoints.Count - 2;
+				p1index = ballPoints.Count - 1;
 			}
 			
 			if (p2index >= ballPoints.Count) {
@@ -101,10 +82,33 @@ public class TrackGenerator : MonoBehaviour
 			{
 				float t = i * pointStep;
 				Vector3 position = (1.0f - t) * (1.0f - t) * p0 + 2.0f * (1.0f - t) * t * p1 + t * t * p2;
-
-				var pathInfo = new PathInfo { vec = position, normal = Vector3.up };
 				
-				if (j % 3 == 0) {
+				var normal = Vector3.up;
+				
+				var pathInfo = new PathInfo {
+					vec = position, 
+					normal = normal
+				};
+				
+				var forward = (position - prevVec).normalized;
+				
+				if (j % 3 == 0) { 
+					pathInfo.normal = Quaternion.AngleAxis(45 * (1 - t), forward) * Vector3.up;
+				}
+				
+				if (j % 3 == 1) { 
+					pathInfo.normal = Quaternion.AngleAxis(45 * t, forward) * Vector3.up;
+				}
+				
+				if (j % 3 == 2) {
+					pathInfo.normal = Quaternion.AngleAxis(45, forward) * Vector3.up;
+				}
+
+
+				prevVec = position;
+				
+				/*
+				if (j % 3 == 2) {
 					pathInfo.normal = bankNormals[j / 3];
 				} else {
 					Vector3 before = bankNormals[j / 3];
@@ -116,17 +120,19 @@ public class TrackGenerator : MonoBehaviour
 
 					Vector3 midNormal = Vector3.Lerp(before, after, 0.5f);
 					
-					if (j % 3 == 1) {
-						pathInfo.normal = Vector3.Lerp(before, midNormal, t*t);
+					if (j % 3 == 0) {
+						pathInfo.normal = Vector3.Lerp(before, midNormal, t * t);
 					}
 
-					if (j % 3 == 2) {
-						
-						pathInfo.normal = Vector3.Lerp(midNormal, after, 1 - (1.0f - t) * (1.0f - t));
+					if (j % 3 == 1) {
+						pathInfo.normal = Vector3.Lerp(midNormal, after, 1 - (1 - t) * (1 - t));
 					}
 				}
+				*/
+				
 				pathPoints.Add(pathInfo);
 			}
+			
 		}
 
 		UpdatedTrack?.Invoke();
@@ -150,6 +156,10 @@ public class TrackGenerator : MonoBehaviour
 			Gizmos.DrawSphere(ballPos, 0.2f);
 		}
 		
+		Gizmos.color = Color.red;
+		Gizmos.DrawLine(pathPoints[0].vec + -Vector3.forward, pathPoints[0].vec + Vector3.forward);
+		
+		
 		for (var index = 0; index < pathPoints.Count; index++)
 		{
 			int start = index;
@@ -159,8 +169,7 @@ public class TrackGenerator : MonoBehaviour
 			var direction = pathPoints[next].vec - pathPoints[start].vec;
 
 			var up = pathPoints[start].normal;
-
-			Vector3 right = Quaternion.AngleAxis(90f, up) * direction.normalized;
+			Vector3 right = Quaternion.AngleAxis(90f, direction) * pathPoints[start].normal;
 			
 			Gizmos.color = new Color(0.11f, 1f, 0f);
 			Gizmos.DrawLine(pathPoints[start].vec + right, pathPoints[next].vec + right);
@@ -170,7 +179,7 @@ public class TrackGenerator : MonoBehaviour
 			Gizmos.DrawLine(pathPoints[start].vec, pathPoints[start].vec + Vector3.up);
 			
 			Gizmos.color = new Color(1f, 0f, 0f);
-			Gizmos.DrawLine(pathPoints[start].vec + up, pathPoints[start].vec + Vector3.up);
+			Gizmos.DrawLine(pathPoints[start].vec, pathPoints[start].vec + up);
 		}
 	}
 
