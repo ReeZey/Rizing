@@ -7,6 +7,8 @@ public class TrackMeshGenerator : MonoBehaviour {
     private TrackGenerator tracker;
     private MeshFilter meshFilter;
     private MeshCollider meshCollider;
+
+    [SerializeField] private float Width = 1;
     
     private void Awake() {
         tracker = GetComponent<TrackGenerator>();
@@ -21,7 +23,13 @@ public class TrackMeshGenerator : MonoBehaviour {
     private void OnDisable() {
         tracker.UpdatedTrack -= UpdateMesh;
     }
-    
+
+    private void OnValidate() {
+        if (Width < 0.1) Width = 0.1f;
+        
+        if(tracker != null) tracker.ShouldUpdate = true;
+    }
+
     void UpdateMesh() {
         var mesh = CreateRoadMesh(tracker.getPath());
         meshFilter.sharedMesh = mesh;
@@ -36,23 +44,23 @@ public class TrackMeshGenerator : MonoBehaviour {
         for (var i = 0; i < points.Count; i++) {
             if (i >= points.Count - 7) continue;
             
-            var currentPos = transform.InverseTransformPoint(points[i].vec);
-            var nextPos = transform.InverseTransformPoint(points[i + 1].vec);
-            var nextNextPos = transform.InverseTransformPoint(points[i + 2].vec);
+            var currentPos = transform.InverseTransformPoint(points[i].position);
+            var nextPos = transform.InverseTransformPoint(points[i + 1].position);
+            var nextNextPos = transform.InverseTransformPoint(points[i + 2].position);
 
             var currentPosRight = Quaternion.AngleAxis(90, nextPos - currentPos) * points[i].normal;
             var nextPosRight = Quaternion.AngleAxis(90, nextNextPos - nextPos) * points[i + 1].normal;
 
 
-            verts.Add(currentPos - currentPosRight);
-            verts.Add(currentPos + currentPosRight);
-            verts.Add(nextPos + nextPosRight);
-            verts.Add(nextPos - nextPosRight);
+            verts.Add(currentPos - currentPosRight * Width);
+            verts.Add(currentPos + currentPosRight * Width);
+            verts.Add(nextPos + nextPosRight * Width);
+            verts.Add(nextPos - nextPosRight * Width);
             
             uvs.Add(new Vector2(0,0));
-            uvs.Add(new Vector2(1,0));
             uvs.Add(new Vector2(0,1));
             uvs.Add(new Vector2(1,1));
+            uvs.Add(new Vector2(1,0));
             
             //tris.Add(0);
             //tris.Add(3);
