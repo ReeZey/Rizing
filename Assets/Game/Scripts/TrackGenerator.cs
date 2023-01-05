@@ -163,6 +163,7 @@ public class TrackGenerator : MonoBehaviour
 		ShouldUpdate = false;
 	}
 
+	[Serializable]
 	public struct PathInfo {
 		public Vector3 position;
 		public Vector3 normal;
@@ -209,7 +210,7 @@ public class TrackGenerator : MonoBehaviour
 			int parent = index / 3;
 			int mod = index % 3;
 
-			Handles.Label(ballPoints[index] + Vector3.up, $"index: {index}, mod {mod}, parent {parent}");
+			//Handles.Label(ballPoints[index] + Vector3.up, $"index: {index}, mod {mod}, parent {parent}");
 		}
 	}
 
