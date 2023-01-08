@@ -10,6 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 7995949893854208705}
   - component: {fileID: 7995949893854208718}
+  - component: {fileID: 1173668159089823915}
+  - component: {fileID: 4284186453798316044}
+  - component: {fileID: 424702883962165403}
+  - component: {fileID: 4794192681105703325}
   m_Layer: 0
   m_Name: Track
   m_TagString: Untagged
@@ -43,4 +47,86 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53c082e648a498d4fb65f131fbf24d5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numberOfPoints: 5
+  LOD: 2
+  turnAngle: 45
+  maxLength: 25
+  pointSpacing: 200
+  heightsAndValleys: 1000
+  shouldCreateNext: 0
+  StationPrefab: {fileID: 295382803265616994, guid: 6bfa7b5453f47c34c859f0f5a3c06f93,
+    type: 3}
+  virtualCamera: {fileID: 0}
+--- !u!114 &1173668159089823915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7995949893854208704}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5189474934661ca4da6df8bb6ad01332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Width: 5
+--- !u!23 &4284186453798316044
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7995949893854208704}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 8fc524ae84a4d0a4f89c138d195408e7, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+--- !u!33 &424702883962165403
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7995949893854208704}
+  m_Mesh: {fileID: 0}
+--- !u!64 &4794192681105703325
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7995949893854208704}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}

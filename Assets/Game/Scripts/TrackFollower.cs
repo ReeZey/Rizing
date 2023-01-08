@@ -79,15 +79,15 @@ public class TrackFollower : BaseEntity {
     
     private (Vector3 pos, Quaternion quat, Vector3 normal) MiddleOfWheels() {
         Vector3 pos = Vector3.zero;
-        Vector3 upVector = Vector3.zero;
+        Vector3 upVector = Vector3.up;
         
         foreach (var wheel in wheels) {
             pos += wheel.transform.position;
-            upVector += wheel.transform.up;
+            //upVector += wheel.transform.up;
         }
 
         pos /= wheels.Count;
-        upVector /= wheels.Count;
+        //upVector /= wheels.Count;
         var quat = Quaternion.LookRotation(wheels[1].transform.position - wheels[0].transform.position, upVector);
         
         return (pos, quat, upVector);

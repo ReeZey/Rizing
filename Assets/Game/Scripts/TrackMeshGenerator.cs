@@ -9,6 +9,7 @@ public class TrackMeshGenerator : MonoBehaviour {
     private MeshCollider meshCollider;
 
     [SerializeField] private float Width = 1;
+    private List<TrackGenerator.PathInfo> pathInfos = new List<TrackGenerator.PathInfo>();
     
     private void Awake() {
         tracker = GetComponent<TrackGenerator>();
@@ -31,7 +32,10 @@ public class TrackMeshGenerator : MonoBehaviour {
     }
 
     void UpdateMesh() {
-        var mesh = CreateRoadMesh(tracker.getPath());
+        pathInfos.Clear();
+        pathInfos.AddRange(tracker.getPath());
+        
+        var mesh = CreateRoadMesh(pathInfos);
         meshFilter.sharedMesh = mesh;
         meshCollider.sharedMesh = mesh;
     }
@@ -94,5 +98,29 @@ public class TrackMeshGenerator : MonoBehaviour {
         };
 
         return mesh;
+    }
+
+    private void OnDrawGizmos() {
+        for (var index = 0; index < pathInfos.Count; index++) {
+            if (index >= pathInfos.Count - 2) break;
+		
+            var currentPos = transform.InverseTransformPoint(pathInfos[index].position);
+            var nextPos = transform.InverseTransformPoint(pathInfos[index + 1].position);
+            var nextNextPos = transform.InverseTransformPoint(pathInfos[index + 2].position);
+		
+            var currentPosRight = Quaternion.AngleAxis(90, nextPos - currentPos) * pathInfos[index].normal * Width;
+            var nextPosRight = Quaternion.AngleAxis(90, nextNextPos - nextPos) * pathInfos[index + 1].normal * Width;
+
+            var path = pathInfos[index];
+            var next = pathInfos[index + 1];
+		
+		
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(path.position, path.position + path.normal);
+		
+            Gizmos.color = Color.green;
+            Gizmos.DrawLine(path.position + currentPosRight, next.position + nextPosRight);
+            Gizmos.DrawLine(path.position - currentPosRight, next.position - nextPosRight);
+        }
     }
 }

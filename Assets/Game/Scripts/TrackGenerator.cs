@@ -1,25 +1,52 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
+using Cinemachine;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 [ExecuteAlways]
 public class TrackGenerator : MonoBehaviour 
 {
-	[SerializeField] private int numberOfPoints = 20;
+	[Header("Settings")]
+	[SerializeField] private float LOD = 2;
 	[SerializeField] private float turnAngle = 45f;
-	[SerializeField] private List<Transform> locations = new List<Transform>();
-
+	
+	[SerializeField] private int maxLength = 20;
+	[SerializeField] private int pointSpacing = 20;
+	[SerializeField] private int heightsAndValleys = 20;
+	[SerializeField] private bool shouldCreateNext;
+	
+	[Header("Linking")]
+	[SerializeField] private GameObject StationPrefab;
+	[SerializeField] private CinemachineVirtualCamera virtualCamera;
+	
+	private bool createNextPath = true;
+	
+	private List<Transform> locations = new List<Transform>();
 	private List<Vector3> ballPoints = new List<Vector3>();
 	private List<PathInfo> pathPoints = new List<PathInfo>();
+	private FastNoiseLite fnl = new FastNoiseLite();
 
-	public bool ShouldUpdate;
-	
-	public delegate void test();
-	public event test UpdatedTrack;
+	[NonSerialized] public bool ShouldUpdate;
+	private int point;
+
+	public delegate void UpdateTrack();
+	public event UpdateTrack UpdatedTrack;
+
+	private void Start() {
+		fnl.SetSeed(Random.Range(0, 1000));
+	}
 
 	private void Update() {
-		if(!Application.isPlaying) UpdateMesh();
+		if (!Application.isPlaying) {
+			UpdateMesh();
+		} else {
+			if (createNextPath && shouldCreateNext) {
+				createNextPath = false;
+				StartCoroutine(CreateNextCoroutine());
+			}
+		}
 	}
 
 	private void FixedUpdate() {
@@ -56,8 +83,8 @@ public class TrackGenerator : MonoBehaviour
 			}
 
 			var transPosition = trans.position;
-			ballPoints.Add(transPosition + (locations[locationIndex + 1].position - transPosition) * 0.33f);
-			ballPoints.Add(transPosition + (locations[locationIndex + 1].position - transPosition) * 0.66f);
+			ballPoints.Add(transPosition + (locations[locationIndex + 1].position - transPosition) * 0.45f);
+			ballPoints.Add(transPosition + (locations[locationIndex + 1].position - transPosition) * 0.55f);
 		}
 		
 		Vector3 prevVec = Vector3.zero;
@@ -78,7 +105,10 @@ public class TrackGenerator : MonoBehaviour
 			Vector3 p1 =  ballPoints[p1index];
 			Vector3 p2 = (ballPoints[p1index] + ballPoints[p2index]) * 0.5f;
 			
-			float pointStep = 1.0f / numberOfPoints;
+			float distanceCalc = Vector3.Distance(p0, p2) / LOD;
+			if (distanceCalc < 2) distanceCalc = 2;
+			
+			float pointStep = 1f / distanceCalc;
 			
 			int modulu = (ballIndex + 1) % 3;
 
@@ -94,7 +124,7 @@ public class TrackGenerator : MonoBehaviour
 				p2index--;
 			}
 
-			for(var i = 0; i < numberOfPoints; i++) 
+			for(var i = 0; i < distanceCalc; i++) 
 			{
 				float t = i * pointStep;
 				Vector3 position = (1.0f - t) * (1.0f - t) * p0 + 2.0f * (1.0f - t) * t * p1 + t * t * p2;
@@ -163,6 +193,63 @@ public class TrackGenerator : MonoBehaviour
 		ShouldUpdate = false;
 	}
 
+	[ContextMenu("Find Next Path")]
+	private void CreateNext() {
+		var trackTransform = transform;
+		int childCount = trackTransform.childCount;
+		
+		if (childCount < 2) {
+			Debug.Log("Too few children to find a forward");
+			return;
+		}
+		
+		var secondLastChild = transform.GetChild(childCount - 2);
+		var secondLastChildPos = secondLastChild.position;
+		
+		var lastChild = transform.GetChild(childCount - 1);
+		var lastChildPos = lastChild.position;
+		
+
+		lastChildPos.y = 0;
+		secondLastChildPos.y = 0;
+
+		if ((lastChildPos - secondLastChildPos).sqrMagnitude < 1) {
+			secondLastChildPos += Vector3.forward;
+		}
+		
+		var forward = (lastChildPos - secondLastChildPos).normalized * Random.Range(10, pointSpacing);
+		
+		float angleNoise = Mathf.Clamp(fnl.GetNoise(point, 0), -1, 1) * 10;
+		float heightNoise = (Mathf.Clamp(fnl.GetNoise(0, point), -1, 1) + 0.5f) * heightsAndValleys;
+		point++;
+
+		var rotatedForward = Quaternion.AngleAxis(angleNoise, Vector3.up) * forward;
+		var height = Vector3.up * heightNoise;
+
+		if (height.y < 0) height.y = 0;
+		
+		Instantiate(StationPrefab, lastChildPos + rotatedForward + height, Quaternion.identity, trackTransform);
+
+		int middleIndex = childCount / 2;
+		var middle = trackTransform.GetChild(middleIndex);
+		var nextMiddle = trackTransform.GetChild(middleIndex + 1);
+		
+		virtualCamera.Follow = middle;
+		virtualCamera.LookAt = nextMiddle;
+	}
+
+	private IEnumerator CreateNextCoroutine(){
+		yield return new WaitForSeconds(0.1f);
+		createNextPath = true;
+		
+		if (transform.childCount > maxLength) {
+			Destroy(transform.GetChild(0).gameObject);
+			yield break;
+		}
+		
+		CreateNext();
+	}
+
 	[Serializable]
 	public struct PathInfo {
 		public Vector3 position;
@@ -170,7 +257,8 @@ public class TrackGenerator : MonoBehaviour
 	}
 
 	public void OnValidate() {
-		numberOfPoints = Math.Max(1, numberOfPoints);
+		LOD = Math.Max(1, LOD);
+		pointSpacing = Math.Max(10, pointSpacing);
 		ShouldUpdate = true;
 	}
 
@@ -181,28 +269,6 @@ public class TrackGenerator : MonoBehaviour
 			Gizmos.DrawSphere(ballPos, 0.1f);
 		}
 		*/
-
-		for (var index = 0; index < pathPoints.Count; index++) {
-			if (index >= pathPoints.Count - 2) break;
-			
-			var currentPos = transform.InverseTransformPoint(pathPoints[index].position);
-			var nextPos = transform.InverseTransformPoint(pathPoints[index + 1].position);
-			var nextNextPos = transform.InverseTransformPoint(pathPoints[index + 2].position);
-			
-			var currentPosRight = Quaternion.AngleAxis(90, nextPos - currentPos) * pathPoints[index].normal;
-			var nextPosRight = Quaternion.AngleAxis(90, nextNextPos - nextPos) * pathPoints[index + 1].normal;
-			
-			var path = pathPoints[index];
-			var next = pathPoints[index + 1];
-			
-			
-			Gizmos.color = Color.blue;
-			Gizmos.DrawLine(path.position, path.position + path.normal);
-			
-			Gizmos.color = Color.green;
-			Gizmos.DrawLine(path.position + currentPosRight, next.position + nextPosRight);
-			Gizmos.DrawLine(path.position - currentPosRight, next.position - nextPosRight);
-		}
 
 		for (var index = 0; index < ballPoints.Count; index++) {
 			if (index == ballPoints.Count - 2) break;
