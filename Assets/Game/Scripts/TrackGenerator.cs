@@ -13,7 +13,7 @@ public class TrackGenerator : MonoBehaviour
 	[SerializeField] private float turnAngle = 45f;
 	
 	[SerializeField] private int maxLength = 20;
-	[SerializeField] private int pointSpacing = 20;
+	[SerializeField] private int pointSpacing = 50;
 	[SerializeField] private int heightsAndValleys = 20;
 	[SerializeField] private bool shouldCreateNext;
 	
@@ -22,6 +22,8 @@ public class TrackGenerator : MonoBehaviour
 	[SerializeField] private CinemachineVirtualCamera virtualCamera;
 	
 	private bool createNextPath = true;
+
+	private int pointSpacingMin = 25;
 	
 	private List<Transform> locations = new List<Transform>();
 	private List<Vector3> ballPoints = new List<Vector3>();
@@ -143,7 +145,7 @@ public class TrackGenerator : MonoBehaviour
 
 				Vector3 cross = Vector3.Cross(secoundForward, firstForward);
 				float angle = 1 - Vector3.Dot(secoundForward, firstForward);
-				float final = cross.y * angle * turnAngle;
+				float final = Mathf.Clamp(cross.y * angle * turnAngle, -45, 45);
 
 				//Debug.Log(turn);
 				
@@ -159,7 +161,7 @@ public class TrackGenerator : MonoBehaviour
 
 							Vector3 crossa = Vector3.Cross(secoundForwarda, firstForwarda);
 							float anglea = 1 - Vector3.Dot(secoundForwarda, firstForwarda);
-							float finala = crossa.y * anglea * turnAngle;
+							float finala = Mathf.Clamp(crossa.y * anglea * turnAngle, -45, 45);
 							
 							pathInfo.normal = Quaternion.AngleAxis(Mathf.Lerp(final, finala, t * 0.5f), forward) * Vector3.up;
 						} else {
@@ -173,7 +175,7 @@ public class TrackGenerator : MonoBehaviour
 
 							Vector3 crossa = Vector3.Cross(secoundForwarda, firstForwarda);
 							float anglea = 1 - Vector3.Dot(secoundForwarda, firstForwarda);
-							float finala = crossa.y * anglea * turnAngle;
+							float finala = Mathf.Clamp(crossa.y * anglea * turnAngle, -45, 45);
 							
 							pathInfo.normal = Quaternion.AngleAxis(Mathf.Lerp(final, finala,  (1 - t) * 0.5f), forward) * Vector3.up;
 						} else {
@@ -197,11 +199,8 @@ public class TrackGenerator : MonoBehaviour
 	private void CreateNext() {
 		var trackTransform = transform;
 		int childCount = trackTransform.childCount;
-		
-		if (childCount < 2) {
-			Debug.Log("Too few children to find a forward");
-			return;
-		}
+
+		var forward = Vector3.forward;
 		
 		var secondLastChild = transform.GetChild(childCount - 2);
 		var secondLastChildPos = secondLastChild.position;
@@ -213,33 +212,35 @@ public class TrackGenerator : MonoBehaviour
 		lastChildPos.y = 0;
 		secondLastChildPos.y = 0;
 
-		if ((lastChildPos - secondLastChildPos).sqrMagnitude < 1) {
-			secondLastChildPos += Vector3.forward;
+		if ((lastChildPos - secondLastChildPos).sqrMagnitude > 1) {
+			forward = (lastChildPos - secondLastChildPos).normalized;
 		}
 		
-		var forward = (lastChildPos - secondLastChildPos).normalized * Random.Range(10, pointSpacing);
+		var scaledForward = forward * Random.Range(pointSpacingMin, Mathf.Max(pointSpacingMin, pointSpacing) + 1);
 		
 		float angleNoise = Mathf.Clamp(fnl.GetNoise(point, 0), -1, 1) * 10;
 		float heightNoise = (Mathf.Clamp(fnl.GetNoise(0, point), -1, 1) + 0.5f) * heightsAndValleys;
 		point++;
 
-		var rotatedForward = Quaternion.AngleAxis(angleNoise, Vector3.up) * forward;
+		var rotatedForward = Quaternion.AngleAxis(angleNoise, Vector3.up) * scaledForward;
 		var height = Vector3.up * heightNoise;
 
 		if (height.y < 0) height.y = 0;
 		
 		Instantiate(StationPrefab, lastChildPos + rotatedForward + height, Quaternion.identity, trackTransform);
 
-		int middleIndex = childCount / 2;
-		var middle = trackTransform.GetChild(middleIndex);
-		var nextMiddle = trackTransform.GetChild(middleIndex + 1);
+		if (childCount > 2) {
+			int middleIndex = childCount / 2;
+			var middle = trackTransform.GetChild(middleIndex);
+			var nextMiddle = trackTransform.GetChild(middleIndex + 1);
 		
-		virtualCamera.Follow = middle;
-		virtualCamera.LookAt = nextMiddle;
+			virtualCamera.Follow = middle;
+			virtualCamera.LookAt = nextMiddle;
+		}
 	}
 
-	private IEnumerator CreateNextCoroutine(){
-		yield return new WaitForSeconds(0.1f);
+	private IEnumerator CreateNextCoroutine() {
+		yield return new WaitForSecondsRealtime(1f / 120);
 		createNextPath = true;
 		
 		if (transform.childCount > maxLength) {
@@ -258,7 +259,7 @@ public class TrackGenerator : MonoBehaviour
 
 	public void OnValidate() {
 		LOD = Math.Max(1, LOD);
-		pointSpacing = Math.Max(10, pointSpacing);
+		pointSpacing = Math.Max(pointSpacingMin, pointSpacing);
 		ShouldUpdate = true;
 	}
 
