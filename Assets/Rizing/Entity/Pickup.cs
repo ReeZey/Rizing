@@ -10,7 +10,9 @@ namespace Rizing.Entity {
     
     [RequireComponent(typeof(SaveableEntity))]
     public class Pickup : BaseEntity, ISaveable {
-    
+
+        [SerializeField] private float MaxPickupDistance = 5;
+        
         private InputParser _inputParser;
         private FPSCamera _fpsCamera;
 
@@ -36,6 +38,11 @@ namespace Rizing.Entity {
         }
 
         public override void Process(float deltaTime) {
+            var scroll = _inputParser.GetKey("Scroll").ReadValue<float>();
+            if (scroll != 0 && _holding) {
+                _objectDistance = Mathf.Clamp(_objectDistance + scroll / 500, 2, MaxPickupDistance);
+            }
+            
             if (_inputParser.GetKey("Pickup").WasPressedThisFrame()) {
                 if (_holding) {
                     DropItem();
@@ -43,7 +50,7 @@ namespace Rizing.Entity {
                 }
                 
                 var cameraTransform = _fpsCamera.transform;
-                bool hit = Physics.Raycast(cameraTransform.position, cameraTransform.forward, out var raycastHit, 5);
+                bool hit = Physics.Raycast(cameraTransform.position, cameraTransform.forward, out var raycastHit, MaxPickupDistance);
 
                 if (!hit) return;
                 if (!raycastHit.collider.CompareTag("Pickupable")) return;
@@ -83,7 +90,7 @@ namespace Rizing.Entity {
                 return;
             }
             
-            _pickupRigidbody.velocity = _playerRigidbody.velocity + wantedPos * 10;
+            _pickupRigidbody.velocity = _playerRigidbody.velocity + wantedPos * 20;
         }
 
         private void OnDrawGizmosSelected() {
@@ -93,7 +100,7 @@ namespace Rizing.Entity {
         
             var cameraTransform = _fpsCamera.transform;
             var cameraPosition = cameraTransform.position;
-            Gizmos.DrawLine(cameraPosition, cameraPosition + cameraTransform.forward * 10);
+            Gizmos.DrawLine(cameraPosition, cameraPosition + cameraTransform.forward * MaxPickupDistance);
         }
 
         private void DropItem() {
