@@ -53,6 +53,7 @@ namespace Rizing.Core
 
             Time.timeScale = 1f;
             Time.fixedDeltaTime = Time.timeScale * 0.0078125f;
+            QualitySettings.vSyncCount = 0;
         }
 
         
