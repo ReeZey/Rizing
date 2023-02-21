@@ -1,4 +1,5 @@
-﻿using Rizing.Interface;
+﻿using System;
+using Rizing.Interface;
 using Rizing.Singletons;
 using UnityEngine;
 
@@ -10,8 +11,8 @@ namespace Rizing.Core {
         [Space]
         [SerializeField] private float dampCoefficent = 0.05f;
         [Space]
-        [SerializeField] private float MaxAirSpeed = 10;
-        [SerializeField] private float AirStrafeForce = 2;
+        [SerializeField] private float MaxAirForce = 10;
+        [SerializeField] private float AirStrafeForce = 3;
         [Header("Misc")]
         [SerializeField] private GameObject moveVisualization;
         
@@ -22,6 +23,7 @@ namespace Rizing.Core {
         private Vector3 _direction;
         private bool _grounded;
         private bool _readyJump = true;
+        private float _groundedTicksDelta;
 
         private Vector3 _moveInput;
         private bool _jumpInput;
@@ -44,17 +46,24 @@ namespace Rizing.Core {
 
         public void Process(float deltaTime) {
             _moveInput = _inputParser.GetKey("Move").ReadValue<Vector2>();
-            _jumpInput = _inputParser.GetKey("Jump").WasPressedThisFrame();
+            _jumpInput = _inputParser.GetKey("Jump").IsPressed();
 
             var playerTransform = transform;
             _grounded = Physics.SphereCast(playerTransform.position, 0.5f, Vector3.down, out var hitted, 0.6f, ~LayerMask.GetMask("Player"));
 
             if (!_grounded) _readyJump = true;
 
-            var velocity = _rigidbody.velocity;
+            if (_grounded && !_readyJump) {
+                _groundedTicksDelta += deltaTime;
+                if (_groundedTicksDelta > 0.2f) {
+                    _readyJump = true;
+                    _groundedTicksDelta = 0;
+                }
+            }
+            
             if (_jumpInput && _grounded && _readyJump) {
+                var velocity = _rigidbody.velocity;
                 velocity.y = 0;
-                
                 _rigidbody.velocity = velocity;
                 
                 _rigidbody.AddForce(transform.up * jumpPower, ForceMode.Impulse);
@@ -65,23 +74,23 @@ namespace Rizing.Core {
         public void FixedProcess(float deltaTime) {
             moveVisualization.transform.localPosition = _moveInput * 10;
             
-            if (_grounded) {
-                ProcessGroundedMovement();
+            if (_grounded && _readyJump) {
+                ProcessGroundedMovement(deltaTime);
             } else {
                 ProcessAirMovement();
             }
         }
 
-        private void ProcessGroundedMovement() {
+        private void ProcessGroundedMovement(float dt) {
             var forward = _fpsCamera.forward;
             forward.y = 0;
             
-            _direction = forward.normalized * _moveInput.y + _fpsCamera.right * _moveInput.x;
+            _direction = forward * _moveInput.y + _fpsCamera.right * _moveInput.x;
             _direction.y = 0;
             
-            _rigidbody.AddForce(_direction * moveSpeed, ForceMode.Impulse);
-
-            var velocity = _rigidbody.velocity;
+            //_rigidbody.AddForce(_direction * moveSpeed, ForceMode.Impulse);
+            
+            var velocity = _rigidbody.velocity + _direction.normalized * (moveSpeed * dt);
 
             float velY = velocity.y;
             var newVelocity = Vector3.Lerp(velocity, Vector3.zero, dampCoefficent);
@@ -90,30 +99,18 @@ namespace Rizing.Core {
             _rigidbody.velocity = newVelocity;
         }
         
-        //https://www.reddit.com/r/Unity3D/comments/dcmvf5/i_replicated_the_source_engines_air_strafing/
-        //slightly modified
+        //https://github.com/id-Software/Quake/blob/master/WinQuake/sv_user.c
+        //i like quake movement, ok?
         private void ProcessAirMovement() {
             _direction = _fpsCamera.forward * _moveInput.y + _fpsCamera.right * _moveInput.x;
             _direction.y = 0;
             
-            var velocity = _rigidbody.velocity;
-            
-            Vector3 projVel = Vector3.Project(velocity, _direction);
-            
-            bool isAway = Vector3.Dot(_direction, projVel) <= 0f;
-            
-            if (Vector3.Dot(_direction.normalized, velocity.normalized) <= -0.8) {
-                _rigidbody.velocity = Vector3.Lerp(new Vector3(0, velocity.y, 0), Vector3.zero, dampCoefficent);
-                return;
-            }
+            Vector3 wish_dir = _direction.normalized;
 
-            if (!(projVel.magnitude < MaxAirSpeed) && !isAway) return;
-
-            Vector3 vc = _direction.normalized * AirStrafeForce;
+            float current_speed = Vector3.Dot(_rigidbody.velocity, wish_dir);
+            float add_speed = Mathf.Clamp(AirStrafeForce - current_speed, 0, MaxAirForce);
             
-            vc = Vector3.ClampMagnitude(vc, isAway ? MaxAirSpeed + projVel.magnitude : MaxAirSpeed - projVel.magnitude);
-            
-            _rigidbody.AddForce(vc, ForceMode.Impulse);
+            _rigidbody.AddForce(wish_dir * add_speed, ForceMode.Impulse);
         }
 
         public void LateProcess(float deltaTime) {
