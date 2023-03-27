@@ -2,7 +2,8 @@
     public class ConsoleOutput {
         public readonly string Text;
         public readonly LogPrefix LogPrefix;
-        
+        public bool clear;
+
         public ConsoleOutput() {
             Text = "";
             LogPrefix = LogPrefix.None;

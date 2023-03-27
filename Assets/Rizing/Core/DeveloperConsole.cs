@@ -32,6 +32,10 @@ namespace Rizing.Core
 
                 var command = _console.GetCommand(split[0]);
                 var output = command.Execute(split);
+
+                if (output.clear) {
+                    _outputBox.text = "";
+                }
             
                 if (output.Text.Length == 0) return;
             
@@ -81,7 +85,6 @@ namespace Rizing.Core
                     break;
                 case LogPrefix.Error:
                     builder.Append("[ERROR] ");
-                    Debug.LogError($"{prefix} [Error] {output.Text}");
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();

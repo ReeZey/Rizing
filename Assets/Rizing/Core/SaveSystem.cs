@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using Rizing.Abstract;
 using Rizing.Developer;
 using Rizing.Save;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Rizing.Core {
 
@@ -36,7 +38,7 @@ namespace Rizing.Core {
             return directoryPath;
         }
 
-        private string BuildPath(string fileName) => $"{path}/{fileName}.pog";
+        private string BuildPath(string fileName) => $"{path}/{fileName}.bin";
 
         [ContextMenu("generate all unset ids")]
         private void GenerateIds() {
@@ -111,31 +113,24 @@ namespace Rizing.Core {
             }
 
             var stream = File.Open(pathToFile, FileMode.Create);
-            //var deflate = new DeflateStream(stream, CompressionMode.Compress);
-
             var formatter = CustomBinaryFormatter.BinaryFormatter;
-            formatter.Serialize(stream, state);
-            stream.Close();
             
-            /*
-            try {
-                formatter.Serialize(stream, state);
-            }
-            catch (Exception e) {
-                Debug.LogError(e);
+            MemoryStream memoryStream = new MemoryStream();
+            formatter.Serialize(memoryStream, state);
 
-                stream.Close();
+            memoryStream.Position = 0;
+            
+            var compressor = new DeflateStream(stream, CompressionMode.Compress);
+            memoryStream.CopyTo(compressor);
 
-                File.Delete(pathToFile);
-                File.Move(pathToFile + ".bak", pathToFile);
-            }
-            */
+            compressor.Close();
+            stream.Close();
         }
 
         private Dictionary<string, object> LoadFile(string str) {
-            string fullPath = BuildPath(str);
-            
             while (true) {
+                string fullPath = BuildPath(str);
+
                 bool normalSaveExist = File.Exists(fullPath);
                 bool backupExist = File.Exists(fullPath + ".bak");
 
@@ -149,26 +144,27 @@ namespace Rizing.Core {
                 }
 
                 var stream = File.Open(fullPath, FileMode.Open);
-                //var deflate = new DeflateStream(stream, CompressionMode.Decompress);
-
+                var deflate = new DeflateStream(stream, CompressionMode.Decompress);
                 var formatter = CustomBinaryFormatter.BinaryFormatter;
 
                 var failed = false;
                 Dictionary<string, object> dict = null;
                 try {
-                    dict = formatter.Deserialize(stream) as Dictionary<string, object>;
+                    dict = formatter.Deserialize(deflate) as Dictionary<string, object>;
                 }
                 catch (Exception e) {
+                    Debug.LogError(e);
                     _developerConsole.LogToConsole(e.ToString(), LogPrefix.Error);
                     failed = true;
                 }
 
+                deflate.Close();
                 stream.Close();
 
                 if (!failed) return dict;
-                
+
                 File.Delete(fullPath);
-                File.Move(fullPath + ".bak", fullPath);
+                if (File.Exists(fullPath + ".bak")) File.Move(fullPath + ".bak", fullPath);
             }
         }
 

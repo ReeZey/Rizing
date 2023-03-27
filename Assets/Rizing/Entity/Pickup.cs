@@ -73,7 +73,7 @@ namespace Rizing.Entity {
             if (_holding && _inputParser.GetKey("Fire1").WasPressedThisFrame()) {
                 DropItem();
                 
-                _pickupRigidbody.AddForce(_fpsCamera.transform.forward * 100, ForceMode.Impulse);
+                _pickupRigidbody.AddForce(_fpsCamera.transform.forward * 50, ForceMode.Impulse);
             }
         }
         
@@ -110,7 +110,6 @@ namespace Rizing.Entity {
             _pickupTransform.parent = _prevParent;
             
             if (_pickupRigidbody == null) return;
-
             _pickupRigidbody.velocity = _playerRigidbody.velocity;
             
             _pickupRigidbody.useGravity = true;
