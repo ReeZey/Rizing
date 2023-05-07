@@ -11,27 +11,30 @@ namespace Rizing.Core {
         [Space]
         [SerializeField] private float dampCoefficent = 0.05f;
         [Space]
-        [SerializeField] private float MaxAirForce = 10;
-        [SerializeField] private float AirStrafeForce = 3;
+        [SerializeField] private float maxAirForce = 10;
+        [SerializeField] private float airStrafeForce = 3;
         [Header("Misc")]
         [SerializeField] private GameObject moveVisualization;
         
-        private Transform _fpsCamera;
-        private Rigidbody _rigidbody;
-        private InputParser _inputParser;
+        private Transform fpsCamera;
+        private Rigidbody rigid;
+        private InputParser inputParser;
+        private Transform playerTransform;
 
-        private Vector3 _direction;
-        private bool _grounded;
-        private bool _readyJump = true;
-        private float _groundedTicksDelta;
+        private Vector3 direction;
+        private bool grounded;
+        private bool readyJump = true;
+        private float groundedTicksDelta;
 
         private Vector3 _moveInput;
         private bool _jumpInput;
         
         private void Start() {
-            _fpsCamera = FPSCamera.Instance.transform;
-            _rigidbody = GetComponent<Rigidbody>();
-            _inputParser = InputParser.Instance;
+            fpsCamera = FPSCamera.Instance.transform;
+            rigid = GetComponent<Rigidbody>();
+            inputParser = InputParser.Instance;
+
+            playerTransform = transform;
             
             GameManager.Instance.AddEntity(this);
         }
@@ -45,36 +48,34 @@ namespace Rizing.Core {
         }
 
         public void Process(float deltaTime) {
-            _moveInput = _inputParser.GetKey("Move").ReadValue<Vector2>();
-            _jumpInput = _inputParser.GetKey("Jump").IsPressed();
-
-            var playerTransform = transform;
-            _grounded = Physics.SphereCast(playerTransform.position, 0.5f, Vector3.down, out var hitted, 0.6f, ~LayerMask.GetMask("Player"));
-
-            if (!_grounded) _readyJump = true;
-
-            if (_grounded && !_readyJump) {
-                _groundedTicksDelta += deltaTime;
-                if (_groundedTicksDelta > 0.2f) {
-                    _readyJump = true;
-                    _groundedTicksDelta = 0;
-                }
-            }
+            _moveInput = inputParser.GetKey("Move").ReadValue<Vector2>();
+            _jumpInput = inputParser.GetKey("Jump").IsPressed();
             
-            if (_jumpInput && _grounded && _readyJump) {
-                var velocity = _rigidbody.velocity;
+            grounded = Physics.SphereCast(playerTransform.position, 0.5f, Vector3.down, out var hitted, 0.5f, ~LayerMask.GetMask("Player"));
+
+            if (_jumpInput && grounded && readyJump && Vector3.Dot(hitted.normal, Vector3.up) > 0.8) {
+                var velocity = rigid.velocity;
                 velocity.y = 0;
-                _rigidbody.velocity = velocity;
+                rigid.velocity = velocity;
                 
-                _rigidbody.AddForce(transform.up * jumpPower, ForceMode.Impulse);
-                _readyJump = false;
+                rigid.AddForce(transform.up * jumpPower, ForceMode.Impulse);
+                readyJump = false;
             }
+            if (!grounded) readyJump = true;
         }
 
         public void FixedProcess(float deltaTime) {
             moveVisualization.transform.localPosition = _moveInput * 10;
             
-            if (_grounded && _readyJump) {
+            Physics.SphereCast(playerTransform.position, 0.5f, Vector3.down, out var hitted, 0.5f, ~LayerMask.GetMask("Player"));
+
+            if (grounded) {
+                if(Vector3.Dot(hitted.normal, Vector3.up) < 0.8) {
+                    grounded = false;
+                }
+            }
+            
+            if (grounded && readyJump) {
                 ProcessGroundedMovement(deltaTime);
             } else {
                 ProcessAirMovement();
@@ -82,35 +83,37 @@ namespace Rizing.Core {
         }
 
         private void ProcessGroundedMovement(float dt) {
-            var forward = _fpsCamera.forward;
+            var forward = fpsCamera.forward;
             forward.y = 0;
             
-            _direction = forward * _moveInput.y + _fpsCamera.right * _moveInput.x;
-            _direction.y = 0;
+            direction = forward * _moveInput.y + fpsCamera.right * _moveInput.x;
+            direction.y = 0;
             
             //_rigidbody.AddForce(_direction * moveSpeed, ForceMode.Impulse);
             
-            var velocity = _rigidbody.velocity + _direction.normalized * (moveSpeed * dt);
+            var velocity = rigid.velocity + direction.normalized * (moveSpeed * dt);
 
             float velY = velocity.y;
             var newVelocity = Vector3.Lerp(velocity, Vector3.zero, dampCoefficent);
             newVelocity.y = velY;
             
-            _rigidbody.velocity = newVelocity;
+            rigid.velocity = newVelocity;
         }
         
         //https://github.com/id-Software/Quake/blob/master/WinQuake/sv_user.c
         //i like quake movement, ok?
         private void ProcessAirMovement() {
-            _direction = _fpsCamera.forward * _moveInput.y + _fpsCamera.right * _moveInput.x;
-            _direction.y = 0;
+            direction = fpsCamera.forward * _moveInput.y + fpsCamera.right * _moveInput.x;
+            direction.y = 0;
             
-            Vector3 wish_dir = _direction.normalized;
+            Vector3 wish_dir = direction.normalized;
 
-            float current_speed = Vector3.Dot(_rigidbody.velocity, wish_dir);
-            float add_speed = Mathf.Clamp(AirStrafeForce - current_speed, 0, MaxAirForce);
+            float current_speed = Vector3.Dot(rigid.velocity, wish_dir);
+            float add_speed = Mathf.Clamp(airStrafeForce - current_speed, 0, maxAirForce);
+
+            Vector3 vel = wish_dir * add_speed;
             
-            _rigidbody.AddForce(wish_dir * add_speed, ForceMode.Impulse);
+            rigid.AddForce(vel, ForceMode.Impulse);
         }
 
         public void LateProcess(float deltaTime) {
