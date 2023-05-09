@@ -10,6 +10,7 @@ namespace Rizing.Core {
         [SerializeField] private float jumpPower = 75;
         [Space]
         [SerializeField] private float dampCoefficent = 0.05f;
+        [SerializeField] private float maxWalkAngle = 0.8f;
         [Space]
         [SerializeField] private float maxAirForce = 10;
         [SerializeField] private float airStrafeForce = 3;
@@ -28,6 +29,9 @@ namespace Rizing.Core {
 
         private Vector3 _moveInput;
         private bool _jumpInput;
+
+        private float current_speed;
+        private float add_speed;
         
         private void Start() {
             fpsCamera = FPSCamera.Instance.transform;
@@ -53,7 +57,7 @@ namespace Rizing.Core {
             
             grounded = Physics.SphereCast(playerTransform.position, 0.5f, Vector3.down, out var hitted, 0.5f, ~LayerMask.GetMask("Player"));
 
-            if (_jumpInput && grounded && readyJump && Vector3.Dot(hitted.normal, Vector3.up) > 0.8) {
+            if (_jumpInput && grounded && readyJump && Vector3.Dot(hitted.normal, Vector3.up) > maxWalkAngle) {
                 var velocity = rigid.velocity;
                 velocity.y = 0;
                 rigid.velocity = velocity;
@@ -68,9 +72,9 @@ namespace Rizing.Core {
             moveVisualization.transform.localPosition = _moveInput * 10;
             
             Physics.SphereCast(playerTransform.position, 0.5f, Vector3.down, out var hitted, 0.5f, ~LayerMask.GetMask("Player"));
-
+            
             if (grounded) {
-                if(Vector3.Dot(hitted.normal, Vector3.up) < 0.8) {
+                if(Vector3.Dot(hitted.normal, Vector3.up) < maxWalkAngle) {
                     grounded = false;
                 }
             }
@@ -108,8 +112,8 @@ namespace Rizing.Core {
             
             Vector3 wish_dir = direction.normalized;
 
-            float current_speed = Vector3.Dot(rigid.velocity, wish_dir);
-            float add_speed = Mathf.Clamp(airStrafeForce - current_speed, 0, maxAirForce);
+            current_speed = Vector3.Dot(rigid.velocity, wish_dir);
+            add_speed = Mathf.Clamp(airStrafeForce - current_speed, 0, maxAirForce);
 
             Vector3 vel = wish_dir * add_speed;
             
