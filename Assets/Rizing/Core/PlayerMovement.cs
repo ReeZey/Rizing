@@ -1,5 +1,4 @@
-﻿using System;
-using Rizing.Interface;
+﻿using Rizing.Interface;
 using Rizing.Singletons;
 using UnityEngine;
 
@@ -71,22 +70,22 @@ namespace Rizing.Core {
         public void FixedProcess(float deltaTime) {
             moveVisualization.transform.localPosition = _moveInput * 10;
             
-            Physics.SphereCast(playerTransform.position, 0.5f, Vector3.down, out var hitted, 0.5f, ~LayerMask.GetMask("Player"));
+            Physics.SphereCast(playerTransform.position, 0.5f, Vector3.down, out var groundHit, 0.5f, ~LayerMask.GetMask("Player"));
             
             if (grounded) {
-                if(Vector3.Dot(hitted.normal, Vector3.up) < maxWalkAngle) {
+                if(Vector3.Dot(groundHit.normal, Vector3.up) < maxWalkAngle) {
                     grounded = false;
                 }
             }
             
             if (grounded && readyJump) {
-                ProcessGroundedMovement(deltaTime);
+                ProcessGroundedMovement(deltaTime, groundHit);
             } else {
                 ProcessAirMovement();
             }
         }
 
-        private void ProcessGroundedMovement(float dt) {
+        private void ProcessGroundedMovement(float dt, RaycastHit groundHit) {
             var forward = fpsCamera.forward;
             forward.y = 0;
             
@@ -97,6 +96,11 @@ namespace Rizing.Core {
             
             var velocity = rigid.velocity + direction.normalized * (moveSpeed * dt);
 
+            float upDiff = Vector3.Dot(groundHit.normal, Vector3.up);
+
+            Vector3 cross = Vector3.Cross(Vector3.up, forward);
+            velocity = Quaternion.AngleAxis(upDiff, cross) * velocity;
+            
             float velY = velocity.y;
             var newVelocity = Vector3.Lerp(velocity, Vector3.zero, dampCoefficent);
             newVelocity.y = velY;
