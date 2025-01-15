@@ -18,10 +18,6 @@ namespace Rizing.Abstract {
             //ConsoleProDebug.Watch("Last generated GUID: ", $"{gameObject.name}, new guid [{ID}]");
             return ID;
         }
-
-        private void Start() {
-            if(gameObject.getComp)
-        }
     
         public object SaveState()
         {
