@@ -57,9 +57,9 @@ namespace Rizing.Core {
             grounded = Physics.SphereCast(playerTransform.position, 0.5f, Vector3.down, out var hitted, 0.5f, ~LayerMask.GetMask("Player"));
 
             if (_jumpInput && grounded && readyJump && Vector3.Dot(hitted.normal, Vector3.up) > maxWalkAngle) {
-                var velocity = rigid.velocity;
+                var velocity = rigid.linearVelocity;
                 velocity.y = 0;
-                rigid.velocity = velocity;
+                rigid.linearVelocity = velocity;
                 
                 rigid.AddForce(transform.up * jumpPower, ForceMode.Impulse);
                 readyJump = false;
@@ -94,7 +94,7 @@ namespace Rizing.Core {
             
             //_rigidbody.AddForce(_direction * moveSpeed, ForceMode.Impulse);
             
-            var velocity = rigid.velocity + direction.normalized * (moveSpeed * dt);
+            var velocity = rigid.linearVelocity + direction.normalized * (moveSpeed * dt);
 
             float upDiff = Vector3.Dot(groundHit.normal, Vector3.up);
 
@@ -105,7 +105,7 @@ namespace Rizing.Core {
             var newVelocity = Vector3.Lerp(velocity, Vector3.zero, dampCoefficent);
             newVelocity.y = velY;
             
-            rigid.velocity = newVelocity;
+            rigid.linearVelocity = newVelocity;
         }
         
         //https://github.com/id-Software/Quake/blob/master/WinQuake/sv_user.c
@@ -116,7 +116,7 @@ namespace Rizing.Core {
             
             Vector3 wish_dir = direction.normalized;
 
-            current_speed = Vector3.Dot(rigid.velocity, wish_dir);
+            current_speed = Vector3.Dot(rigid.linearVelocity, wish_dir);
             add_speed = Mathf.Clamp(airStrafeForce - current_speed, 0, maxAirForce);
 
             Vector3 vel = wish_dir * add_speed;

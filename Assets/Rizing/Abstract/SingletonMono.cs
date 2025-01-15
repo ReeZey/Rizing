@@ -11,9 +11,9 @@ namespace Rizing.Abstract {
             get
             {
                 if (_instance != null) return _instance;
-                _instance = FindObjectOfType<T>();
+                _instance = FindAnyObjectByType<T>();
                 if (_instance != null) return _instance;
-                    
+                
                 Debug.Log("Couldn't find SingletonMono type " + typeof(T));
                 return null;
             }

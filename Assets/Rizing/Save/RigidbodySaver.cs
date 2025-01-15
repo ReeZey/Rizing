@@ -20,7 +20,7 @@ namespace Rizing.Save {
         {
             return new SaveData
             {
-                velocity = rigid.velocity,
+                velocity = rigid.linearVelocity,
                 angularVelocity = rigid.angularVelocity,
             };
         }
@@ -29,7 +29,7 @@ namespace Rizing.Save {
         {
             SaveData _saveData = (SaveData) inputData;
             
-            if(_loadVelocity) rigid.velocity = _saveData.velocity;
+            if(_loadVelocity) rigid.linearVelocity = _saveData.velocity;
             if(_loadAngularVelocity) rigid.angularVelocity = _saveData.angularVelocity;
         }
 

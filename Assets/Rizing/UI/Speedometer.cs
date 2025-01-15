@@ -8,7 +8,7 @@ namespace Rizing.UI {
         [SerializeField] private Rigidbody rigid;
     
         public override void Process(float deltaTime) {
-            _textMesh.text = Mathf.RoundToInt(rigid.velocity.magnitude).ToString();
+            _textMesh.text = Mathf.RoundToInt(rigid.linearVelocity.magnitude).ToString();
         }
     }
 }

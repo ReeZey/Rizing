@@ -11,7 +11,7 @@ namespace Rizing.Entity {
     [RequireComponent(typeof(SaveableEntity))]
     public class Pickup : BaseEntity, ISaveable {
 
-        [SerializeField] private float MaxPickupDistance = 5;
+        [SerializeField] private readonly float MaxPickupDistance = 5;
         
         private InputParser _inputParser;
         private FPSCamera _fpsCamera;
@@ -62,7 +62,7 @@ namespace Rizing.Entity {
                 
                 raycastHit.rigidbody.useGravity = false;
                 _pickupRigidbody = raycastHit.rigidbody;
-                _pickupRigidbody.angularDrag = 2;
+                _pickupRigidbody.angularDamping = 2;
 
                 _objectDistance = (playerTransform.position - _pickupTransform.position).magnitude;//raycastHit.distance;
                 _pickupGUID = _pickupTransform.TryGetComponent<SaveableEntity>(out var saveableEntity) ? saveableEntity.id : null;
@@ -90,7 +90,7 @@ namespace Rizing.Entity {
                 return;
             }
             
-            _pickupRigidbody.velocity = _playerRigidbody.velocity + wantedPos * 20;
+            _pickupRigidbody.linearVelocity = _playerRigidbody.linearVelocity + wantedPos * 20;
         }
 
         private void OnDrawGizmosSelected() {
@@ -110,10 +110,10 @@ namespace Rizing.Entity {
             _pickupTransform.parent = _prevParent;
             
             if (_pickupRigidbody == null) return;
-            _pickupRigidbody.velocity = _playerRigidbody.velocity;
+            _pickupRigidbody.linearVelocity = _playerRigidbody.linearVelocity;
             
             _pickupRigidbody.useGravity = true;
-            _pickupRigidbody.angularDrag = 0.05f;
+            _pickupRigidbody.angularDamping = 0.05f;
         }
 
         public object SaveState()
@@ -136,8 +136,8 @@ namespace Rizing.Entity {
             
             _pickupGUID = saveData.pickupGUID;
             
-            _pickupRigidbody = FindObjectsOfType<SaveableEntity>()
-                .FirstOrDefault(entity => entity.id == _pickupGUID)
+            _pickupRigidbody = FindObjectsByType(typeof(SaveableEntity), FindObjectsSortMode.None)
+                .OfType<SaveableEntity>().FirstOrDefault(entity => entity.id == _pickupGUID)
                 ?.GetComponent<Rigidbody>();
             
             _objectDistance = saveData.objectDistance;

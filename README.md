@@ -1,10 +1,11 @@
 # RizingAlpha
 
-a sort of Hobby project im working on,
+**Was marked as read only on Sep 19, 2023**, but no longer!
+  
+a sort of Hobby project im working on,  
+right now its more of a framework for my future unity games are going to be built upon  
 
-right now its more of a framework for my future unity games are going to be built upon
-
-current unity version: `2019.4.40f1`
+current unity version: `6000.0.33f1`
 
 \* saves are stored in `Application.persistentDataPath`/Saves
 

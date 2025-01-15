@@ -14,10 +14,10 @@ namespace Rizing.Core
         
         private InputParser _inputParser;
         
-        private readonly List<IEntity> entities = new List<IEntity>();
+        private readonly List<IEntity> entities = new();
 
-        private readonly List<IEntity> adding = new List<IEntity>();
-        private readonly List<IEntity> removing = new List<IEntity>();
+        private readonly List<IEntity> adding = new();
+        private readonly List<IEntity> removing = new();
 
 
         [Range(0, 1000)] public int lockFPS;
@@ -63,7 +63,7 @@ namespace Rizing.Core
         
         public void ReAddEntities() {
             entities.Clear();
-            entities.AddRange(FindObjectsOfType<MonoBehaviour>().OfType<IEntity>());
+            entities.AddRange(FindObjectsByType(typeof(MonoBehaviour), FindObjectsSortMode.None).OfType<IEntity>());
         }
 
         private void Start() {
