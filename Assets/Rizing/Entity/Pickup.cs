@@ -17,8 +17,6 @@ namespace Rizing.Entity {
         private FPSCamera _fpsCamera;
 
         private Rigidbody _playerRigidbody;
-        
-        private Transform _prevParent;
         private Transform _pickupTransform;
         
         private Rigidbody _pickupRigidbody;
@@ -56,9 +54,7 @@ namespace Rizing.Entity {
                 if (!raycastHit.collider.CompareTag("Pickupable")) return;
 
                 _pickupTransform = raycastHit.transform;
-                _prevParent = _pickupTransform.parent;
                 var playerTransform = transform;
-                _pickupTransform.parent = playerTransform;
                 
                 raycastHit.rigidbody.useGravity = false;
                 _pickupRigidbody = raycastHit.rigidbody;
@@ -106,8 +102,6 @@ namespace Rizing.Entity {
         private void DropItem() {
             if (!_holding) return;
             _holding = false;
-
-            _pickupTransform.parent = _prevParent;
             
             if (_pickupRigidbody == null) return;
             _pickupRigidbody.linearVelocity = _playerRigidbody.linearVelocity;

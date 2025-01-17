@@ -12,7 +12,7 @@ public class Ragdoll : BaseEntity
     private Animator anim;
     private bool dead = false;
     
-    void Start()
+    protected override void Start()
     {
         base.Start();
         spine.GetComponentsInChildren<Rigidbody>().ToList().ForEach(r => r.isKinematic = true);
