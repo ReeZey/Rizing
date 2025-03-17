@@ -8,6 +8,7 @@ using Rizing.Save;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Newtonsoft.Json;
 
 namespace Rizing.Core {
 
@@ -38,7 +39,7 @@ namespace Rizing.Core {
             return directoryPath;
         }
 
-        private string BuildPath(string fileName) => $"{path}/{fileName}.bin";
+        private string BuildPath(string fileName) => $"{path}/{fileName}.json";
 
         [ContextMenu("generate all unset ids")]
         private void GenerateIds() {
@@ -113,22 +114,24 @@ namespace Rizing.Core {
             }
 
             var stream = File.Open(pathToFile, FileMode.Create);
-            var formatter = CustomBinaryFormatter.BinaryFormatter;
-            
-            MemoryStream memoryStream = new MemoryStream();
-            formatter.Serialize(memoryStream, state);
 
-            memoryStream.Position = 0;
-            
-            var compressor = new DeflateStream(stream, CompressionMode.Compress);
-            memoryStream.CopyTo(compressor);
+            //var compressor = new DeflateStream(stream, CompressionMode.Compress);
 
-            compressor.Close();
+            JsonSerializerSettings settings = new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                Formatting = Formatting.Indented
+            };
+
+            string json = JsonConvert.SerializeObject(state, settings);
+            stream.Write(System.Text.Encoding.UTF8.GetBytes(json), 0, json.Length);
+            
+            //compressor.Close();
             stream.Close();
         }
 
         private Dictionary<string, object> LoadFile(string str) {
-            while (true) {
+            for(int i = 0; i < 2; i++) {
                 string fullPath = BuildPath(str);
 
                 bool normalSaveExist = File.Exists(fullPath);
@@ -143,29 +146,35 @@ namespace Rizing.Core {
                     continue;
                 }
 
+                Dictionary<string, object> dict = new Dictionary<string, object>();
+
                 var stream = File.Open(fullPath, FileMode.Open);
-                var deflate = new DeflateStream(stream, CompressionMode.Decompress);
-                var formatter = CustomBinaryFormatter.BinaryFormatter;
-
-                var failed = false;
-                Dictionary<string, object> dict = null;
                 try {
-                    dict = formatter.Deserialize(deflate) as Dictionary<string, object>;
+                    //var deflate = new DeflateStream(stream, CompressionMode.Decompress);
+
+                    JsonSerializerSettings settings = new JsonSerializerSettings
+                    {
+                        ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                        Formatting = Formatting.Indented
+                    };
+                    dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(new StreamReader(stream).ReadToEnd(), settings);
+
+                    //deflate.Close();
+                    stream.Close();
+                } catch (Exception e) {
+                    stream.Close();
+                    Debug.LogError("Error loading save file: " + e);
+
+                    if (File.Exists(fullPath)) {
+                        File.Delete(fullPath);
+                        continue;
+                    }
                 }
-                catch (Exception e) {
-                    Debug.LogError(e);
-                    _developerConsole.LogToConsole(e.ToString(), LogPrefix.Error);
-                    failed = true;
-                }
 
-                deflate.Close();
-                stream.Close();
-
-                if (!failed) return dict;
-
-                File.Delete(fullPath);
-                if (File.Exists(fullPath + ".bak")) File.Move(fullPath + ".bak", fullPath);
+                return dict;
             }
+
+            return new Dictionary<string, object>();
         }
 
         private void SaveState(Dictionary<string, object> stateList) {

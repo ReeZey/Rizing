@@ -1,4 +1,5 @@
 ﻿using System;
+using Newtonsoft.Json.Linq;
 using Rizing.Interface;
 using UnityEngine;
 
@@ -27,7 +28,7 @@ namespace Rizing.Save {
 
         public void LoadState(object inputData)
         {
-            SaveData _saveData = (SaveData) inputData;
+            SaveData _saveData = JObject.FromObject(inputData).ToObject<SaveData>();
             
             if(_loadVelocity) rigid.linearVelocity = _saveData.velocity;
             if(_loadAngularVelocity) rigid.angularVelocity = _saveData.angularVelocity;

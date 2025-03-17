@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 using Rizing.Interface;
+using UnityEditor.Overlays;
 using UnityEngine;
 
 namespace Rizing.Abstract {
@@ -33,7 +35,7 @@ namespace Rizing.Abstract {
 
         public void LoadState(object state)
         {
-            var stateDict = (Dictionary<Type, object>) state;
+            var stateDict = JObject.FromObject(state).ToObject<Dictionary<Type, object>>();
 
             foreach (var saveable in GetComponents<ISaveable>())
             {

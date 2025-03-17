@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using Rizing.Abstract;
 using Rizing.Core;
 using Rizing.Interface;
@@ -122,7 +123,7 @@ namespace Rizing.Entity {
 
         public void LoadState(object inputData)
         {
-            var saveData = (SaveData) inputData;
+            var saveData = JObject.FromObject(inputData).ToObject<SaveData>();
 
             _holding = saveData.holding;
             

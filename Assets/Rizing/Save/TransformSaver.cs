@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System;
 using Rizing.Interface;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Rizing.Save {
     public class TransformSaver : MonoBehaviour, ISaveable {
@@ -22,7 +24,7 @@ namespace Rizing.Save {
 
         public void LoadState(object inputData)
         {
-            var saveData = (SaveData) inputData;
+            var saveData = JObject.FromObject(inputData).ToObject<SaveData>();
         
             gameObject.SetActive(saveData.enabled);
             
