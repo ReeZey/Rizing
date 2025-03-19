@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rizing.Interface;
 using UnityEditor.Overlays;
@@ -23,11 +24,13 @@ namespace Rizing.Abstract {
     
         public object SaveState()
         {
-            var stateDict = new Dictionary<Type, object>();
+            var stateDict = new Dictionary<string, object>();
+
+            stateDict.Add("enabled", isActiveAndEnabled);
 
             foreach (var saveable in GetComponents<ISaveable>())
             {
-                stateDict[saveable.GetType()] = saveable.SaveState();
+                stateDict[saveable.GetType().FullName] = saveable.SaveState();
             }
 
             return stateDict;
@@ -35,11 +38,16 @@ namespace Rizing.Abstract {
 
         public void LoadState(object state)
         {
-            var stateDict = JObject.FromObject(state).ToObject<Dictionary<Type, object>>();
+            var stateDict = JObject.FromObject(state).ToObject<Dictionary<string, object>>();
+
+            if (stateDict.TryGetValue("enabled", out object enabled))
+            {
+                gameObject.SetActive((bool)enabled);
+            }
 
             foreach (var saveable in GetComponents<ISaveable>())
             {
-                if (stateDict.TryGetValue(saveable.GetType(), out object value))
+                if (stateDict.TryGetValue(saveable.GetType().FullName, out object value))
                 {
                     saveable.LoadState(value);
                 }
