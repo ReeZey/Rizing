@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rizing.Abstract;
 using Rizing.Interface;
+using Rizing.Save;
 using UnityEngine;
 
 public class MoveablePlatform : BaseEntity, ISaveable
@@ -56,6 +58,7 @@ public class MoveablePlatform : BaseEntity, ISaveable
     [Serializable]
     private struct SaveData
     {
+        [JsonConverter(typeof(smolVector3))]
         public Vector3 startpos;
         public float delta;
     }
