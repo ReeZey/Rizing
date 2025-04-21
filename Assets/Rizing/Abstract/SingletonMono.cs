@@ -3,6 +3,7 @@ using UnityEngine;
 namespace Rizing.Abstract {
     public abstract class SingletonMono<T> : MonoBehaviour where T : Component {
         public bool Persistent;
+        public static bool Alive => _instance != null;
     
         private static T _instance;
     
@@ -39,4 +40,5 @@ namespace Rizing.Abstract {
             }
         }
     }
+
 }

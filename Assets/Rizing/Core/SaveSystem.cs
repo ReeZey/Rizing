@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using Rizing.Abstract;
 using Rizing.Developer;
-using Rizing.Save;
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Unity.Collections;
+using System.Linq;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Rizing.Core {
 
@@ -88,7 +90,7 @@ namespace Rizing.Core {
             
             _developerConsole.LogToConsole($"Saving [{str}]");
 
-            var state = LoadFile(str);
+            var state = new Dictionary<string, object>();
             SaveState(state);
             SaveFile(state, str);
         }
@@ -178,7 +180,7 @@ namespace Rizing.Core {
         }
 
         private void SaveState(Dictionary<string, object> stateList) {
-            foreach (var saveable in _gameManager.GetSaveables()) {
+            foreach (SaveableEntity saveable in _gameManager.GetSaveables()) {
                 if (saveable.id == "unset") {
                     _developerConsole.LogToConsole($"SAVE WARNING. saveable entity [{saveable.name}] is unset, developer issue", LogPrefix.Warning);
                     continue;
@@ -189,14 +191,48 @@ namespace Rizing.Core {
         }
 
         private void LoadState(IDictionary<string, object> stateList) {
-            foreach (var saveable in _gameManager.GetSaveables()) {
-                if (saveable.id == "unset") {
-                    _developerConsole.LogToConsole($"LOAD WARNING. saveable entity [{saveable.name}] is unset, developer issue", LogPrefix.Warning);
+            SaveableEntity[] all_objects = FindObjectsByType<SaveableEntity>(FindObjectsSortMode.None);
+
+            //Remove old objects
+            foreach (SaveableEntity saveable_entity in all_objects) {
+                if(!stateList.ContainsKey(saveable_entity.id)) {
+                    Destroy(saveable_entity.gameObject);
                     continue;
                 }
+            }
 
-                if (stateList.TryGetValue(saveable.id, out object state)) {
-                    saveable.LoadState(state);
+
+            //Add new objects
+            foreach (var (save_id, state) in stateList) {
+                if (!all_objects.Any(x => x.id == save_id)) {
+                    var stateDict = JObject.FromObject(state).ToObject<Dictionary<string, object>>();
+
+                    if(stateDict.TryGetValue("prefab", out object prefab)) {
+                        Addressables.InstantiateAsync(prefab, Vector3.zero, Quaternion.identity).Completed += handle => {
+                            if (handle.Status == AsyncOperationStatus.Succeeded) {
+                                SaveableEntity saveableEntity = handle.Result.GetComponent<SaveableEntity>();
+                                saveableEntity.ForceUpdateID(save_id);
+                                saveableEntity.LoadState(state);
+                            } else {
+                                _developerConsole.LogToConsole($"LOAD WARNING. saveable entity [{save_id}] prefab error", LogPrefix.Warning);
+                            }
+                        };
+                        continue;
+                    }
+
+                    _developerConsole.LogToConsole($"LOAD WARNING. saveable entity [{save_id}] not found in scene, and is not a prefab", LogPrefix.Warning);
+                    continue;
+                }
+            }
+
+            //Load states
+            foreach(var (save_id, state) in stateList){
+                foreach (SaveableEntity saveable_entity in all_objects) {
+                    if(saveable_entity.id != save_id) {
+                        continue;
+                    }
+
+                    saveable_entity.LoadState(state);
                 }
             }
         }

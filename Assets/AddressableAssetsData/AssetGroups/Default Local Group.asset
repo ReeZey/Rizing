@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Default Local Group
+  m_EditorClassIdentifier: 
+  m_GroupName: Default Local Group
+  m_GUID: b912b2b315511844793a4ee321130a12
+  m_SerializeEntries:
+  - m_GUID: 39bd3f5d5a0a95340954c3353bb85cfa
+    m_Address: Assets/Rizing/Prefabs/Door.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 52e910af01f2a1342a3624ff2444044f
+    m_Address: Assets/Rizing/Prefabs/Cube.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 709240427a203784188499f141540e3c
+    m_Address: Assets/Rizing/Prefabs/Player.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a5d483e9ec5f6994dac8cac3f56c3590
+    m_Address: Assets/Rizing/Prefabs/Platform.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 49d4076da3766ba49bc01caf0907b2ab, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: ae6911c9ca7beaa4eb365368657e4e72, type: 2}
+    - {fileID: 11400000, guid: d001bf64d6879d7439f4f98aeac01533, type: 2}

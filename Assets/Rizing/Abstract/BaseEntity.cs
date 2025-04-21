@@ -31,5 +31,12 @@ namespace Rizing.Abstract {
         public virtual void LateFixedProcess(float deltaTime) {
             
         }
+
+        public virtual void OnDestroy()
+        {
+            if(GameManager.Alive){
+                GameManager.Instance.RemoveEntity(this);
+            }
+        }
     }
 }

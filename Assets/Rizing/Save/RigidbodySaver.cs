@@ -15,7 +15,7 @@ namespace Rizing.Save {
         private bool _load;
         private Rigidbody rigid;
 
-        private void Start() {
+        private void Awake() {
             rigid = GetComponent<Rigidbody>();
         }
 
