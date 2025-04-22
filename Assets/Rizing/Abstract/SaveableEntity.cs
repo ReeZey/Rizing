@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using Rizing.Interface;
 using UnityEngine;
+using Rizing.Other;
+using Rizing.Save;
+
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -11,13 +15,20 @@ using UnityEditor.AddressableAssets.Settings;
 #endif
 
 namespace Rizing.Abstract {
+
+    [RequireComponent(typeof(TransformSaver))]
     public class SaveableEntity : BaseEntity
     {
         public string id => ID;
 
-        public bool spawnable_object = true;
-        [SerializeField] private string prefab_path;
-
+        public bool SpawnableObject = true;
+        
+        [SerializeField]
+        #if UNITY_EDITOR 
+        [Disabled] 
+        #endif 
+        private string PrefabPath;
+        
         [SerializeField] private string ID = "unset";
 
         [ContextMenu("Generate new ID")]
@@ -41,8 +52,8 @@ namespace Rizing.Abstract {
                 { "enabled", isActiveAndEnabled }
             };
 
-            if(spawnable_object) {
-                stateDict["prefab"] = prefab_path;
+            if(SpawnableObject) {
+                stateDict["prefab"] = PrefabPath;
             }
 
             foreach (var saveable in GetComponents<ISaveable>())
@@ -77,22 +88,36 @@ namespace Rizing.Abstract {
     {
         if (!Application.isPlaying)
         {
-            if(!spawnable_object) {
-                prefab_path = "unspawnable object";
+            if(PrefabUtility.GetPrefabAssetType(gameObject) != PrefabAssetType.Regular){
                 return;
             }
 
-            GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(gameObject) ?? gameObject;
-            prefab_path = AssetDatabase.GetAssetPath(prefab);
+            if (PrefabUtility.GetCorrespondingObjectFromSource(gameObject) != null) {
+                return;
+            }
+
+            if(!SpawnableObject) {
+                PrefabPath = "unspawnable object";
+                return;
+            }
+            
+            PrefabPath = AssetDatabase.GetAssetPath(gameObject);
 
             AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.GetSettings(true);
 
-            if(settings.FindAssetEntry(AssetDatabase.AssetPathToGUID(prefab_path)) == null) {
+            if(settings.FindAssetEntry(AssetDatabase.AssetPathToGUID(PrefabPath)) != null) {
                 return;
             }
 
-            AddressableAssetEntry entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(prefab_path), settings.DefaultGroup);
-            entry.SetAddress(prefab_path);
+            AddressableAssetEntry entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(PrefabPath), settings.DefaultGroup);
+            
+            if(entry == null) {
+                return;
+            }
+            
+            Debug.Log($"Created Addressable Asset Entry: {gameObject.name}");
+            entry.SetAddress(PrefabPath);
+            entry.SetLabel("default", true, true);
         }
     }
 

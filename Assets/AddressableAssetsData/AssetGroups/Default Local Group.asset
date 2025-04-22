@@ -33,6 +33,18 @@ MonoBehaviour:
     m_SerializedLabels:
     - default
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 75cc58f9f7681ea4f8e59484d12eb2f1
+    m_Address: Assets/Game/Prefabs/Banana.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7bd46f011a2002b4aba6e387bda89235
+    m_Address: Assets/Game/Prefabs/Snowman.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a5d483e9ec5f6994dac8cac3f56c3590
     m_Address: Assets/Rizing/Prefabs/Platform.prefab
     m_ReadOnly: 0

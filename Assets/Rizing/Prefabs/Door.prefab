@@ -193,7 +193,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spawnable_object: 1
   prefab_path: 
-  ID: b4f745a7-a2ad-4773-99fb-94c145f95950
+  ID: b4f745a7-a
 --- !u!114 &3494362396127519459
 MonoBehaviour:
   m_ObjectHideFlags: 0

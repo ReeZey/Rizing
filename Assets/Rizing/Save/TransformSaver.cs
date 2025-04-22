@@ -3,11 +3,8 @@ using System;
 using Rizing.Interface;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-using Rizing.Abstract;
 
 namespace Rizing.Save {
-    
-    [RequireComponent(typeof(SaveableEntity))]
     public class TransformSaver : MonoBehaviour, ISaveable {
         [SerializeField] private bool _loadPosition = true;
         [SerializeField] private bool _loadScale = true;
