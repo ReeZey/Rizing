@@ -31,6 +31,8 @@ namespace Rizing.Core {
 
         private float current_speed;
         private float add_speed;
+
+        private float jump_timer;
         
         private void Start() {
             fpsCamera = FPSCamera.Instance.transform;
@@ -54,7 +56,20 @@ namespace Rizing.Core {
             _moveInput = inputParser.GetKey("Move").ReadValue<Vector2>();
             _jumpInput = inputParser.GetKey("Jump").IsPressed();
             
-            grounded = Physics.SphereCast(playerTransform.position, 0.5f, Vector3.down, out var hitted, 0.5f, ~LayerMask.GetMask("Player"));
+            //grounded = Physics.SphereCast(playerTransform.position, 0.5f, Vector3.down, out var hitted, 0.5f, ~LayerMask.GetMask("Player"));
+
+            grounded = Physics.BoxCast(playerTransform.position, Vector3.one * 0.5f, Vector3.down, out var hitted, Quaternion.identity, 0.5f, ~LayerMask.GetMask("Player"));
+
+            if(grounded && !readyJump) {
+                jump_timer += deltaTime;
+
+                if(jump_timer > 0.5f) {
+                    readyJump = true;
+                    jump_timer = 0;
+                }
+            } else {
+                jump_timer = 0;
+            }
 
             if (_jumpInput && grounded && readyJump && Vector3.Dot(hitted.normal, Vector3.up) > maxWalkAngle) {
                 var velocity = rigid.linearVelocity;
@@ -70,8 +85,10 @@ namespace Rizing.Core {
         public void FixedProcess(float deltaTime) {
             moveVisualization.transform.localPosition = _moveInput * 10;
             
-            Physics.SphereCast(playerTransform.position, 0.5f, Vector3.down, out var groundHit, 0.5f, ~LayerMask.GetMask("Player"));
+            //Physics.SphereCast(playerTransform.position, 0.5f, Vector3.down, out var groundHit, 0.5f, ~LayerMask.GetMask("Player"));
             
+            Physics.BoxCast(playerTransform.position, Vector3.one * 0.5f, Vector3.down, out var groundHit, Quaternion.identity, 0.5f, ~LayerMask.GetMask("Player"));
+
             if (grounded) {
                 if(Vector3.Dot(groundHit.normal, Vector3.up) < maxWalkAngle) {
                     grounded = false;

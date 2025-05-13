@@ -6887,8 +6887,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f25302684f88faa42bbfd7091bd739a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnable_object: 0
-  prefab_path: unspawnable object
+  SpawnableObject: 1
+  PrefabPath: 
   ID: fpscamera
 --- !u!114 &1797805768
 MonoBehaviour:
@@ -8474,6 +8474,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 8962951729089730999, guid: 709240427a203784188499f141540e3c,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
